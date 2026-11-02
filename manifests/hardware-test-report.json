@@ -1,0 +1,20 @@
+{
+  "evidence": "User-reported physical tests in project conversation; no new hardware tests performed during release preparation",
+  "device": "Seeed reTerminal Sticky / ESP32-S3 / 32 MiB flash",
+  "artifact_association": "Stage 4 update package supplied in this project; no new independent device readback in release preparation",
+  "confirmed": [
+    "CrossPoint default EPUB reader",
+    "Settings > System > Switch to Seeedash 1.2.0",
+    "Physical Reset without Up returns to CrossPoint",
+    "Up + Reset starts Seeedash with USB",
+    "Menu switching works on battery",
+    "Stage 4 update successfully installed"
+  ],
+  "not_confirmed": [
+    "Up + Reset on battery (earlier unsuccessful)",
+    "Deep sleep/wake stress and Up held on wake",
+    "Power-cut atomicity",
+    "Runtime stack/heap high-water",
+    "Other device revisions"
+  ]
+}

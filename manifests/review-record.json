@@ -1,0 +1,18 @@
+{
+  "workflow": "CrossPoint firmware-handoff; independent read-only review",
+  "initial_candidate_tree": "b051df669ec7b914ac516defa8d56c72c6a2a1f8",
+  "followup_candidate_tree": "4630eca3c76b09bcb6ffc08666fcc3413eb684bf",
+  "axes": {
+    "correctness": "No actionable findings; initial and targeted cache-fix follow-up complete",
+    "architecture": "No actionable findings; initial and targeted cache-fix follow-up complete",
+    "embedded": "No actionable findings; initial and targeted cache-fix follow-up complete",
+    "i18n-docs": "No actionable findings; initial and targeted cache-fix follow-up complete"
+  },
+  "rounds": 2,
+  "followup_scope": "Disable isolated SCons ELF/object cache to retain the mandatory link-map audit",
+  "post_review_changes": "Main-agent verified whitespace cleanup, exact upstream copyright notice retention, documentation precision and final evidence/inventory updates; runtime unchanged",
+  "source_comparison": "CrossPoint patch byte-identical to the supplied Stage 4 patch; prototype runtime sources retained",
+  "recorded_process_deviation": "Architecture reviewer inadvertently invoked git write-tree, returning the existing candidate tree; no source/index edits or tests/builds",
+  "human_scope": "Owner requested packaging the physically tested Stage 4 design and explicitly authorized a local commit; public publication still requires confirmation",
+  "new_hardware_tests": false
+}

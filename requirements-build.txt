@@ -1,0 +1,4 @@
+# pioarduino installs the platformio Python module. Do not substitute the older PyPI platformio distribution.
+pioarduino==6.2.0.post1
+pyelftools==0.33
+ziglang==0.14.1

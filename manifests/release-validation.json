@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "release": "1.0.0",
+  "phase": "final-offline-validation",
+  "first_target_build": "PASS",
+  "host_tests": "PASS",
+  "final_elf_nvs_flash_guard_audit": "PASS",
+  "idf_and_independent_partition_generators": "PASS",
+  "official_download_digest_and_extents": "PASS",
+  "local_fresh_image_size": 33554432,
+  "local_fresh_image_sha256": "269457f131624ab0bbfbaf1f107da237e4be838079503f0212043cb5716b77f3",
+  "first_build_segments": [
+    {
+      "file": "bootloader.bin",
+      "offset": "0x0",
+      "bytes": 24528,
+      "sha256": "1bf18960be959d423eade349d110e47ac21ae75b1c8bc6dce8090a751f991edd",
+      "body_sha256": "777895b3e1a3bd4f48e9246989e15155025618220ef675557035c1a225c7a625"
+    },
+    {
+      "file": "crosspoint.bin",
+      "offset": "0x690000",
+      "bytes": 5316016,
+      "sha256": "d2b844ddf71dddd6696c85db89ec122517489dc140b4d6fe0a88c694a3b60b00",
+      "body_sha256": "8418725d2b6eb41fb09f8225ff6040099eb66ead9b0a70db067caa792e681b19"
+    }
+  ],
+  "clean_rebuild_comparison": "PASS: both code segments and complete local32MiB image byte-identical; same host/path/tool cache, no SCons object/ELF cache",
+  "new_hardware_testing": false,
+  "public_firmware_assets": false,
+  "public_assets": "source-only",
+  "formatting": "PASS: clang-format21; exact original CrossPoint patch retained; own-source whitespace check passed, vendor license/patch texts retained verbatim",
+  "independent_reviews": "PASS: four axes, initial and targeted cache-fix follow-up",
+  "cached_clean_attempt": "REJECTED by mandatory audit: SCons restored ELF without firmware.map; no bundle generated",
+  "resolution": "SCons object/ELF cache disabled only in isolated release profile; final fresh compile/link and ELF/map audit passed",
+  "final_target_build": "PASS",
+  "cross_host_reproducibility": "NOT_CLAIMED",
+  "original_working_inputs_unchanged": true,
+  "protected_data_simulation": "PASS: nonempty synthetic canaries and complete local factory-derived image; no device backup supplied",
+  "publication_audit": "PASS: source allowlist, text/size/path/secret patterns and manual provenance review; final archive checked by packager",
+  "markdown_links": "PASS",
+  "manual_esptool_syntax": "Checked installed esptool4.12.0 version/help only; no device commands",
+  "final_build_segments": [
+    {
+      "file": "bootloader.bin",
+      "offset": "0x0",
+      "bytes": 24528,
+      "sha256": "1bf18960be959d423eade349d110e47ac21ae75b1c8bc6dce8090a751f991edd",
+      "body_sha256": "777895b3e1a3bd4f48e9246989e15155025618220ef675557035c1a225c7a625"
+    },
+    {
+      "file": "crosspoint.bin",
+      "offset": "0x690000",
+      "bytes": 5316016,
+      "sha256": "d2b844ddf71dddd6696c85db89ec122517489dc140b4d6fe0a88c694a3b60b00",
+      "body_sha256": "8418725d2b6eb41fb09f8225ff6040099eb66ead9b0a70db067caa792e681b19"
+    }
+  ],
+  "sector_write_ranges": [
+    {
+      "file": "bootloader.bin",
+      "start": "0x0",
+      "end_exclusive": "0x6000"
+    },
+    {
+      "file": "crosspoint.bin",
+      "start": "0x690000",
+      "end_exclusive": "0xba2000"
+    }
+  ],
+  "final_local_fresh_sha256": "269457f131624ab0bbfbaf1f107da237e4be838079503f0212043cb5716b77f3"
+}

@@ -1,0 +1,12 @@
+# Dedicated Sticky integration. All entries are audited against the final link.
+-Wl,--wrap=nvs_flash_init,--wrap=nvs_flash_deinit,--wrap=nvs_flash_erase
+-Wl,--wrap=nvs_flash_init_partition,--wrap=nvs_flash_deinit_partition,--wrap=nvs_flash_erase_partition
+-Wl,--wrap=nvs_flash_erase_partition_ptr,--wrap=nvs_open,--wrap=nvs_open_from_partition
+-Wl,--wrap=esp_partition_write,--wrap=esp_partition_erase_range
+-Wl,--wrap=nvs_flash_init_partition_ptr,--wrap=nvs_flash_secure_init,--wrap=nvs_flash_secure_init_partition
+-Wl,--wrap=esp_partition_write_raw,--wrap=esp_flash_write,--wrap=esp_flash_erase_region
+-Wl,--wrap=esp_flash_erase_chip,--wrap=esp_flash_write_encrypted
+-Wl,--wrap=spi_flash_write,--wrap=spi_flash_write_encrypted,--wrap=spi_flash_erase_range
+-Wl,--wrap=spi_flash_erase_sector,--wrap=spi_flash_erase_chip
+-Wl,--wrap=esp_vfs_spiffs_register,--wrap=esp_spiffs_format
+-Wl,--wrap=esp_vfs_littlefs_register,--wrap=esp_littlefs_format

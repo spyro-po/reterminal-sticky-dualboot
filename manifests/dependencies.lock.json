@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "release": "1.0.0",
+  "crosspoint": {
+    "url": "https://github.com/crosspoint-reader/crosspoint-reader.git",
+    "commit": "e8299b5f126817282939059d6505f90429489276",
+    "patch": "patches/crosspoint-e8299b5-dualboot.patch",
+    "patch_sha256": "1be2135ed321ede36dbe04d2980c13c346072c117ee02ecf80b5c86904848e2c"
+  },
+  "freeink": {
+    "url": "https://github.com/Free-Ink/freeink-sdk.git",
+    "commit": "5e94fe7480f019c89fbf691aef87523eb1b46704"
+  },
+  "bootloader_idf": {
+    "url": "https://github.com/espressif/esp-idf.git",
+    "version": "v5.4",
+    "commit": "67c1de1eebe095d554d281952fde63c16ee2dca0",
+    "toolchain": "esp-14.2.0_20241119"
+  },
+  "platformio": {
+    "distribution": "pioarduino",
+    "version": "6.2.0.post1",
+    "platform_url": "https://github.com/pioarduino/platform-espressif32/releases/download/55.03.311/platform-espressif32.zip",
+    "platform_version": "55.03.311",
+    "arduino": "3.3.11",
+    "app_idf": "5.5.5",
+    "scons": "4.11.1",
+    "app_toolchain": "14.2.0+20260121"
+  },
+  "seeedash": {
+    "version": "1.2.0",
+    "bytes": 33292288,
+    "sha256": "5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2",
+    "registry_commit": "f0479400594d8f9a3d7fd7b282f2d7b2a1bdbd0e",
+    "url": "https://raw.githubusercontent.com/Seeed-Projects/reterminal-sticky-playground-registry/f0479400594d8f9a3d7fd7b282f2d7b2a1bdbd0e/firmwares/sticky-factory/firmware/1.2.0/reterminal_sticky_1_2_0.bin",
+    "redistribution": "NOT_CLEARED_EXCLUDE_FROM_PUBLIC_ASSETS"
+  },
+  "source_date_epoch": 1793576188,
+  "reader_plus_reference_only": {
+    "url": "https://github.com/estebangel-crypto/reader-plus.git",
+    "commit": "a491bfa7f61c2dd200ed7a99f532e2b2b2d4afce",
+    "source_copied": false
+  },
+  "host": {
+    "python": "3.12",
+    "pyelftools": "0.33",
+    "ziglang": "0.14.1",
+    "clang_format": "21.1.8",
+    "manual_recovery_esptool": "4.12.0"
+  },
+  "declared_application_libraries": {
+    "ArduinoJson": "7.4.2",
+    "SdFat": "2.3.1",
+    "QRCode": "0.0.1",
+    "PNGdec": "1.1.6",
+    "JPEGDEC": "86282979224c8a32fd51e091ed5a35b0c699a52b",
+    "AnimatedGIF": "67cfacafe12ef4926c7713342c57d2a4af040e5e",
+    "WebSockets": "2.7.3",
+    "Arduino-wolfSSL": "5.7.2",
+    "NimBLE-Arduino": "2.5.1"
+  }
+}

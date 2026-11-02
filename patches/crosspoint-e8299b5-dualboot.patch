@@ -1,0 +1,557 @@
+diff --git a/lib/I18n/translations/english.yaml b/lib/I18n/translations/english.yaml
+index 81d3eddfc0c9214e200ca12d4b1b941ccdc4909e..db469d6b98172023b05eb868eb8dc939d95f107b 100644
+--- a/lib/I18n/translations/english.yaml
++++ b/lib/I18n/translations/english.yaml
+@@ -95,6 +95,20 @@ STR_CAT_READER: "Reader"
+ STR_CAT_CONTROLS: "Controls"
+ STR_CAT_SYSTEM: "System"
+ STR_SETTINGS_GENERAL: "System"
++STR_SWITCH_TO_SEEEDASH: "Switch to Seeedash"
++STR_SEEEDASH_RETURN_UNVERIFIED: "Switching is locked until returning to CrossPoint with a boot button has been verified."
++STR_SEEEDASH_NOT_AVAILABLE: "Switching is unavailable. Check the partition layout, Seeedash 1.2.0 image and boot configuration."
++STR_SEEEDASH_SWITCH_CONFIRM: "Restart into Seeedash? Physical Reset without Up returns to CrossPoint. All firmware and resource updates are forbidden in this test."
++STR_SEEEDASH_LAYOUT_ERROR: "Partition layout mismatch. This build requires app1/test, cp_nvs and bootstate in the protected 32 MiB layout."
++STR_SEEEDASH_IMAGE_ERROR: "Seeedash 1.2.0 image verification failed (length, header or SHA-256). No restart requested."
++STR_SEEEDASH_BOOTLOADER_ERROR: "Bootloader integrity or selector protocol mismatch. Use the matching verified bootloader + CrossPoint segment pair or your backup. Do not use the FACTORY-DATA image on this device."
++STR_SEEEDASH_JOURNAL_INVALID: "No valid private bootstate record. Boot configuration is not confirmed."
++STR_SEEEDASH_JOURNAL_READ_ERROR: "Cannot read private bootstate. No restart requested."
++STR_SEEEDASH_JOURNAL_ERASE_ERROR: "Cannot erase the inactive bootstate sector. No restart requested."
++STR_SEEEDASH_JOURNAL_WRITE_ERROR: "Bootstate write failed; the selection may already be stored. Use physical Reset before sleeping or retrying."
++STR_SEEEDASH_JOURNAL_VERIFY_ERROR: "Bootstate readback failed; the selection is uncertain. Use physical Reset before sleeping or retrying."
++STR_SEEEDASH_JOURNAL_EXHAUSTED: "Bootstate sequence exhausted. No restart requested. Restore a verified backup."
++STR_SEEEDASH_POWER_ERROR: "Cannot prepare the battery power latch. No restart requested."
+ STR_SETTINGS_NETWORK: "Connectivity"
+ STR_SLEEP_SCREEN: "Sleep Screen"
+ STR_TOUCH_TOGGLE: "Touch"
+@@ -664,3 +678,5 @@ STR_BT_HOLD: "hold"
+ STR_BT_MAPPING_CLEARED: "Mapping cleared"
+ STR_DELETE_ITEM_CONFIRM: "Delete?"
+ STR_SET_SLEEP_COVER_CONFIRM: "Set Sleep Cover?"
++
++STR_SEEEDASH_MEMORY_ERROR: "Not enough memory to verify the firmware. No restart requested."
+diff --git a/lib/hal/HalSystem.cpp b/lib/hal/HalSystem.cpp
+index e02ddd18f06cd94d08b0ccd47df3b3a38352e050..d6a99e99e4812edbc7324f9159b3eb2dd4f4cf19 100644
+--- a/lib/hal/HalSystem.cpp
++++ b/lib/hal/HalSystem.cpp
+@@ -1,5 +1,23 @@
+ #include "HalSystem.h"
+ 
++#include <BoardConfig.h>
++#include <Memory.h>
++#include <esp_image_format.h>
++#include <esp_ota_ops.h>
++#if CROSSPOINT_STICKY_DUALBOOT
++#include <driver/gpio.h>
++#include <esp_flash.h>
++#include <esp_rom_sys.h>
++#include <mbedtls/sha256.h>
++
++#include "boot_contract.h"
++extern "C" {
++#include "boot_policy.h"
++}
++#endif
++
++#include <algorithm>
++#include <cstring>
+ #include <string>
+ 
+ #include "Arduino.h"
+@@ -88,6 +106,231 @@ void IRAM_ATTR __wrap_panic_print_backtrace(const void* frame, int core) {
+ 
+ namespace HalSystem {
+ 
++namespace {
++struct SeeedashPartition {
++  const char* label;
++  esp_partition_type_t type;
++  esp_partition_subtype_t subtype;
++  uint32_t address;
++  uint32_t size;
++};
++
++constexpr SeeedashPartition SEEEDASH_PARTITIONS[] = {
++    {"nvs", ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_NVS, 0x9000, 0x7d000},
++    {"otadata", ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_OTA, 0x86000, 0x2000},
++    {"phy_init", ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_PHY, 0x88000, 0x1000},
++#if CROSSPOINT_STICKY_DUALBOOT
++    {"cp_nvs", ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_NVS, 0x89000, 0x5000},
++    {"bootstate", ESP_PARTITION_TYPE_DATA, static_cast<esp_partition_subtype_t>(0x40), 0x8e000, 0x2000},
++#endif
++    {"app0", ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, 0x90000, 0x600000},
++#if CROSSPOINT_STICKY_DUALBOOT
++    {"app1", ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_TEST, 0x690000, 0x600000},
++#else
++    {"app1", ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_1, 0x690000, 0x600000},
++#endif
++    {"sys_storage", ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_LITTLEFS, 0xc90000, 0x930000},
++    {"usr_storage", ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_LITTLEFS, 0x15c0000, 0xa00000},
++    {"coredump", ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, 0x1fc0000, 0x40000},
++};
++
++bool matchesSeeedashLayout() {
++  for (const auto& expected : SEEEDASH_PARTITIONS) {
++    const auto* actual = esp_partition_find_first(expected.type, expected.subtype, expected.label);
++    if (!actual || actual->address != expected.address || actual->size != expected.size || actual->encrypted ||
++        actual->readonly) {
++      LOG_ERR("BOOT", "Partition %s mismatch (expected subtype=%u @0x%lx size=0x%lx)", expected.label,
++              static_cast<unsigned>(expected.subtype), static_cast<unsigned long>(expected.address),
++              static_cast<unsigned long>(expected.size));
++      return false;
++    }
++  }
++  const auto* running = esp_ota_get_running_partition();
++#if CROSSPOINT_STICKY_DUALBOOT
++  auto count = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, nullptr);
++  unsigned entries = 0;
++  for (auto it = count; it; it = esp_partition_next(it)) ++entries;
++  if (entries != sizeof(SEEEDASH_PARTITIONS) / sizeof(SEEEDASH_PARTITIONS[0])) return false;
++  return running && running->address == 0x690000 && running->subtype == ESP_PARTITION_SUBTYPE_APP_TEST;
++#else
++  return running && running->address == 0x690000 && running->subtype == ESP_PARTITION_SUBTYPE_APP_OTA_1;
++#endif
++}
++
++struct SeeedashVerification {
++  esp_image_metadata_t metadata;
++#if CROSSPOINT_STICKY_DUALBOOT
++  mbedtls_sha256_context hash;
++  uint8_t chunk[128];
++  uint8_t digest[32];
++#endif
++};
++
++#if CROSSPOINT_STICKY_DUALBOOT
++bool matchesSelectorBootloader(SeeedashVerification& verification) {
++  auto& metadata = verification.metadata;
++  const esp_partition_pos_t pos = {0, 0x8000};
++  if (esp_image_verify(ESP_IMAGE_VERIFY, &pos, &metadata) != ESP_OK || metadata.image.hash_appended != 1 ||
++      metadata.image.spi_size != 5 || metadata.image_len < 32 || metadata.image_len > 0x8000)
++    return false;
++  // IDF skips the appended bootloader SHA in non-secure mode. Verify it explicitly.
++  auto& hash = verification.hash;
++  mbedtls_sha256_init(&hash);
++  bool ok = mbedtls_sha256_starts(&hash, 0) == 0;
++  auto& chunk = verification.chunk;
++  size_t matched = 0;
++  bool contract = false;
++  static constexpr char marker[] = STICKY_BOOT_CONTRACT;
++  const uint32_t bodyLength = metadata.image_len - 32;
++  for (uint32_t off = 0; ok && off < bodyLength;) {
++    const size_t size = std::min(sizeof(chunk), static_cast<size_t>(bodyLength - off));
++    ok = esp_flash_read(nullptr, chunk, off, size) == ESP_OK && mbedtls_sha256_update(&hash, chunk, size) == 0;
++    for (size_t i = 0; ok && i < size && !contract; ++i) {
++      matched = chunk[i] == marker[matched] ? matched + 1 : (chunk[i] == marker[0] ? 1 : 0);
++      contract = matched == sizeof(marker) - 1;
++    }
++    off += size;
++  }
++  auto& digest = verification.digest;
++  ok = ok && mbedtls_sha256_finish(&hash, digest) == 0 &&
++       std::memcmp(digest, metadata.image_digest, sizeof(digest)) == 0;
++  mbedtls_sha256_free(&hash);
++  return ok && contract;
++}
++
++const esp_partition_t* selectorJournal() {
++  return esp_partition_find_first(ESP_PARTITION_TYPE_DATA, static_cast<esp_partition_subtype_t>(0x40), "bootstate");
++}
++bool readSelector(void* ctx, unsigned sector, boot_record_t* record) {
++  return sector < 2 &&
++         esp_partition_read(static_cast<const esp_partition_t*>(ctx), sector * 4096, record, sizeof(*record)) == ESP_OK;
++}
++bool eraseSelector(void* ctx, unsigned sector) {
++  return sector < 2 &&
++         esp_partition_erase_range(static_cast<const esp_partition_t*>(ctx), sector * 4096, 4096) == ESP_OK;
++}
++bool writeSelector(void* ctx, unsigned sector, const boot_record_t* record) {
++  return sector < 2 && esp_partition_write(static_cast<const esp_partition_t*>(ctx), sector * 4096, record,
++                                           sizeof(*record)) == ESP_OK;
++}
++bool validatedSeeedash(void*, boot_target_t target) { return target == BOOT_SEEEDASH; }
++
++SeeedashBootStatus checkSelectorJournal() {
++  const auto* journal = selectorJournal();
++  boot_record_t records[2];
++  if (!journal || !readSelector(const_cast<esp_partition_t*>(journal), 0, &records[0]) ||
++      !readSelector(const_cast<esp_partition_t*>(journal), 1, &records[1]))
++    return SeeedashBootStatus::JournalReadFailed;
++  static constexpr uint8_t tag[20] = {'S', 'T', 'K', 'Y', '-', 'B', 'O', 'O', 'T', '-',
++                                      'V', '1', 255, 255, 255, 255, 255, 255, 255, 255};
++  for (const auto& r : records) {
++    if (boot_record_valid(&r) && std::memcmp(r.label, tag, sizeof(tag)) == 0) return SeeedashBootStatus::Ready;
++  }
++  return SeeedashBootStatus::JournalInvalid;
++}
++
++bool holdSelectorPower() {
++  if (BoardConfig::ACTIVE.power.latch0 != 45 || BoardConfig::ACTIVE.power.latch1 != 46) return false;
++  // Keep U3 D high before clocking CP. Do not enter sleep or release the battery latch.
++  if (gpio_hold_dis(GPIO_NUM_45) != ESP_OK || gpio_set_level(GPIO_NUM_45, 1) != ESP_OK ||
++      gpio_set_direction(GPIO_NUM_45, GPIO_MODE_OUTPUT) != ESP_OK || gpio_hold_dis(GPIO_NUM_46) != ESP_OK ||
++      gpio_set_level(GPIO_NUM_46, 0) != ESP_OK || gpio_set_direction(GPIO_NUM_46, GPIO_MODE_OUTPUT) != ESP_OK)
++    return false;
++  esp_rom_delay_us(2);
++  return gpio_set_level(GPIO_NUM_46, 1) == ESP_OK && gpio_hold_en(GPIO_NUM_45) == ESP_OK &&
++         gpio_hold_en(GPIO_NUM_46) == ESP_OK;
++}
++#endif
++}  // namespace
++
++bool firmwareUpdatesAllowed() {
++  if (!BoardConfig::isSticky()) return true;
++  // Detect vendor storage even if the rest of the layout is damaged or changed.
++  return !esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "sys_storage") &&
++         !esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "usr_storage");
++}
++
++SeeedashBootStatus checkSeeedashBoot() {
++  if (!BoardConfig::isSticky() || !matchesSeeedashLayout()) {
++    LOG_ERR("BOOT", "Seeedash partition layout or running app1 subtype mismatch");
++    return SeeedashBootStatus::LayoutMismatch;
++  }
++
++// Enable only for a deployment whose bootloader button return has passed device tests.
++#if !CROSSPOINT_STICKY_DUALBOOT && \
++    (!defined(CROSSPOINT_SEEEDASH_RETURN_VERIFIED) || CROSSPOINT_SEEEDASH_RETURN_VERIFIED != 1)
++  LOG_ERR("BOOT", "Seeedash return path has not been verified for this build");
++  return SeeedashBootStatus::ReturnNotVerified;
++#else
++  // Appended image digest from the SHA-256-verified official Seeedash 1.2.0 package.
++  static constexpr uint8_t SEEEDASH_DIGEST[32] = {0xb7, 0x18, 0x44, 0x69, 0xaa, 0x47, 0xa6, 0x80, 0xc2, 0x93, 0x84,
++                                                  0x8b, 0x26, 0x43, 0x42, 0x70, 0x5c, 0xc8, 0x17, 0x68, 0x9f, 0x4f,
++                                                  0x76, 0x93, 0xd2, 0xe6, 0x74, 0xf0, 0xab, 0x23, 0xee, 0xc7};
++  const esp_partition_pos_t position = {0x90000, 0x600000};
++  // One checked, short-lived block reuses the metadata allocation for SHA scratch too.
++  auto verification = makeUniqueNoThrow<SeeedashVerification>();
++  if (!verification) {
++    LOG_ERR("BOOT", "OOM: Seeedash verification workspace (%zu bytes)", sizeof(SeeedashVerification));
++    return SeeedashBootStatus::MemoryUnavailable;
++  }
++  auto* metadata = &verification->metadata;
++#if CROSSPOINT_STICKY_DUALBOOT
++  if (!matchesSelectorBootloader(*verification)) {
++    LOG_ERR("BOOT", "Bootloader image integrity or selector protocol mismatch");
++    return SeeedashBootStatus::BootloaderMismatch;
++  }
++  const auto journalStatus = checkSelectorJournal();
++  if (journalStatus != SeeedashBootStatus::Ready) return journalStatus;
++#endif
++  if (esp_image_verify(ESP_IMAGE_VERIFY, &position, metadata) != ESP_OK || metadata->image_len != 3261088 ||
++      metadata->image.hash_appended != 1 || metadata->image.spi_size != 5 ||
++      std::memcmp(metadata->image_digest, SEEEDASH_DIGEST, sizeof(SEEEDASH_DIGEST)) != 0) {
++    LOG_ERR("BOOT", "Seeedash 1.2.0 image verification failed");
++    return SeeedashBootStatus::ImageMismatch;
++  }
++  return SeeedashBootStatus::Ready;
++#endif
++}
++
++SeeedashBootStatus selectSeeedashBoot() {
++  const auto status = checkSeeedashBoot();
++  if (status != SeeedashBootStatus::Ready) return status;
++#if CROSSPOINT_STICKY_DUALBOOT
++  if (!holdSelectorPower()) return SeeedashBootStatus::PowerHoldFailed;
++  auto* journal = const_cast<esp_partition_t*>(selectorJournal());
++  const boot_ops_t ops = {journal, readSelector, eraseSelector, writeSelector, validatedSeeedash, true};
++  boot_result_t result;
++  const boot_status_t selected = boot_choose(&ops, BOOT_SOFTWARE, true, &result);
++  LOG_INF("BOOT", "Menu request: reset=%d selector_status=%d target=%d wrote=%d; power latch held", esp_reset_reason(),
++          selected, result.target, result.wrote_selection);
++  switch (selected) {
++    case BOOT_OK:
++      if (result.target != BOOT_SEEEDASH || result.fallback) return SeeedashBootStatus::SelectionFailed;
++      break;
++    case BOOT_NO_IMAGE:
++      return SeeedashBootStatus::ImageMismatch;
++    case BOOT_READ_ERROR:
++      return SeeedashBootStatus::JournalReadFailed;
++    case BOOT_ERASE_ERROR:
++      return SeeedashBootStatus::JournalEraseFailed;
++    case BOOT_WRITE_ERROR:
++      return SeeedashBootStatus::JournalWriteFailed;
++    case BOOT_VERIFY_ERROR:
++      return SeeedashBootStatus::JournalVerifyFailed;
++    case BOOT_SEQUENCE_EXHAUSTED:
++      return SeeedashBootStatus::JournalExhausted;
++  }
++#else
++  const auto* target = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, "app0");
++  // Keep IDF's image checks and redundant otadata writes; never use the C3 raw-write bypass here.
++  if (!target || esp_ota_set_boot_partition(target) != ESP_OK) {
++    LOG_ERR("BOOT", "Could not select Seeedash boot partition");
++    return SeeedashBootStatus::SelectionFailed;
++  }
++#endif
++  return SeeedashBootStatus::Ready;
++}
++
+ void begin() {
+   // On a panic reboot, preserve diagnostics until checkPanic() has tried to write them to the SD card.
+   // Ordinary boots clear any stale retained diagnostics.
+diff --git a/lib/hal/HalSystem.h b/lib/hal/HalSystem.h
+index e9df1b9d4a6d3c150f64fadb02882d977f63d781..9267fb39ed0c4eb1337f2d9811ca3eef184a46d1 100644
+--- a/lib/hal/HalSystem.h
++++ b/lib/hal/HalSystem.h
+@@ -17,4 +17,27 @@ void clearPanic();
+ 
+ std::string getPanicInfo(bool full = false);
+ bool isRebootFromPanic();
++
++enum class SeeedashBootStatus {
++  Ready,
++  ReturnNotVerified,
++  LayoutMismatch,
++  ImageMismatch,
++  SelectionFailed,
++  BootloaderMismatch,
++  JournalInvalid,
++  JournalReadFailed,
++  JournalEraseFailed,
++  JournalWriteFailed,
++  JournalVerifyFailed,
++  JournalExhausted,
++  PowerHoldFailed,
++  MemoryUnavailable
++};
++
++// Protect the vendor slot from the normal alternating-slot update flows.
++bool firmwareUpdatesAllowed();
++SeeedashBootStatus checkSeeedashBoot();
++// Rechecks prerequisites, commits the selector journal in the dedicated build, and holds power. Caller restarts.
++SeeedashBootStatus selectSeeedashBoot();
+ }  // namespace HalSystem
+diff --git a/src/activities/settings/SettingsActivity.cpp b/src/activities/settings/SettingsActivity.cpp
+index 8938844bfd3d21046fc0f388d645e2c4895a3c72..aac0bcecd18da6d0ef26439b2490349d6b5ca1f2 100644
+--- a/src/activities/settings/SettingsActivity.cpp
++++ b/src/activities/settings/SettingsActivity.cpp
+@@ -5,6 +5,7 @@
+ #include <GfxRenderer.h>
+ #include <HalClock.h>
+ #include <HalDisplay.h>
++#include <HalSystem.h>
+ #include <Logging.h>
+ #include <Memory.h>
+ #include <WiFi.h>
+@@ -81,7 +82,7 @@ SettingsSection sectionFor(const SettingInfo& setting) {
+ }
+ 
+ // Device-only action rows added per section, beyond the shared list.
+-constexpr size_t EXTRA_ROWS_PER_SECTION = 6;
++constexpr size_t EXTRA_ROWS_PER_SECTION = 7;
+ }  // namespace
+ 
+ void SettingsActivity::rebuildSettings() {
+@@ -142,11 +143,14 @@ void SettingsActivity::rebuildSettings() {
+   // asset isn't published yet just report no update available. The Picco's
+   // stock layout has one app slot (partitions_picco.csv), so it cannot update
+   // itself either way.
+-  if (!BoardConfig::isPicco()) {
++  if (!BoardConfig::isPicco() && HalSystem::firmwareUpdatesAllowed()) {
+     addAction(SettingsSection::General, StrId::STR_CHECK_UPDATES, SettingAction::CheckForUpdates);
+     addAction(SettingsSection::General, StrId::STR_SD_FIRMWARE_UPDATE, SettingAction::SdFirmwareUpdate);
+   }
+   addAction(SettingsSection::General, StrId::STR_ABOUT, SettingAction::About);
++  if (BoardConfig::isSticky()) {
++    addAction(SettingsSection::General, StrId::STR_SWITCH_TO_SEEEDASH, SettingAction::SwitchToSeeedash);
++  }
+   rebuildRowItems();
+ }
+ 
+@@ -207,8 +211,54 @@ void SettingsActivity::applyUiSettingChange(uint8_t CrossPointSettings::* valueP
+   resetUi();
+ }
+ 
++namespace {
++const char* seeedashErrorMessage(HalSystem::SeeedashBootStatus status) {
++  using Status = HalSystem::SeeedashBootStatus;
++  switch (status) {
++    case Status::Ready:
++      return "";
++    case Status::ReturnNotVerified:
++      return tr(STR_SEEEDASH_RETURN_UNVERIFIED);
++    case Status::LayoutMismatch:
++      return tr(STR_SEEEDASH_LAYOUT_ERROR);
++    case Status::ImageMismatch:
++      return tr(STR_SEEEDASH_IMAGE_ERROR);
++    case Status::BootloaderMismatch:
++      return tr(STR_SEEEDASH_BOOTLOADER_ERROR);
++    case Status::JournalInvalid:
++      return tr(STR_SEEEDASH_JOURNAL_INVALID);
++    case Status::JournalReadFailed:
++      return tr(STR_SEEEDASH_JOURNAL_READ_ERROR);
++    case Status::JournalEraseFailed:
++      return tr(STR_SEEEDASH_JOURNAL_ERASE_ERROR);
++    case Status::JournalWriteFailed:
++      return tr(STR_SEEEDASH_JOURNAL_WRITE_ERROR);
++    case Status::JournalVerifyFailed:
++      return tr(STR_SEEEDASH_JOURNAL_VERIFY_ERROR);
++    case Status::JournalExhausted:
++      return tr(STR_SEEEDASH_JOURNAL_EXHAUSTED);
++    case Status::MemoryUnavailable:
++      return tr(STR_SEEEDASH_MEMORY_ERROR);
++    case Status::PowerHoldFailed:
++      return tr(STR_SEEEDASH_POWER_ERROR);
++    case Status::SelectionFailed:
++      return tr(STR_SEEEDASH_NOT_AVAILABLE);
++  }
++  return tr(STR_SEEEDASH_NOT_AVAILABLE);
++}
++}  // namespace
++
+ bool SettingsActivity::handleCustomInput() {
+-  return optionPopup.handleInput(mappedInput, [this] { requestUpdate(); });
++  const bool handled = optionPopup.handleInput(mappedInput, [this] { requestUpdate(); });
++  // Do not replace a popup's callback while that callback is executing.
++  if (seeedashSwitchError != HalSystem::SeeedashBootStatus::Ready) {
++    const auto error = seeedashSwitchError;
++    seeedashSwitchError = HalSystem::SeeedashBootStatus::Ready;
++    const char* options[] = {tr(STR_CANCEL)};
++    optionPopup.showMessage(tr(STR_SWITCH_TO_SEEEDASH), seeedashErrorMessage(error), options, 1, 0, [](int) {});
++    requestUpdate();
++  }
++  return handled;
+ }
+ 
+ void SettingsActivity::toggleSelectedSetting() {
+@@ -409,6 +459,9 @@ void SettingsActivity::toggleSelectedSetting() {
+       case SettingAction::None:
+         // Do nothing
+         break;
++      case SettingAction::SwitchToSeeedash:
++        openSeeedashSwitch();
++        break;
+     }
+     return;  // Results will be handled in the result handler, so we can return early here
+   } else {
+@@ -462,6 +515,30 @@ void SettingsActivity::openSleepTimeoutPicker() {
+       });
+ }
+ 
++void SettingsActivity::openSeeedashSwitch() {
++  const auto status = HalSystem::checkSeeedashBoot();
++  if (status != HalSystem::SeeedashBootStatus::Ready) {
++    const char* options[] = {tr(STR_CANCEL)};
++    const char* message = seeedashErrorMessage(status);
++    optionPopup.showMessage(tr(STR_SWITCH_TO_SEEEDASH), message, options, 1, 0, [](int) {});
++    requestUpdate();
++    return;
++  }
++  const char* options[] = {tr(STR_CANCEL), tr(STR_SWITCH_TO_SEEEDASH)};
++  optionPopup.showMessage(tr(STR_SWITCH_TO_SEEEDASH), tr(STR_SEEEDASH_SWITCH_CONFIRM), options, 2, 0,
++                          [this](int index) {
++                            if (index != 1) return;
++                            SETTINGS.saveToFile();
++                            const auto selected = HalSystem::selectSeeedashBoot();
++                            if (selected == HalSystem::SeeedashBootStatus::Ready) {
++                              ESP.restart();
++                              return;
++                            }
++                            seeedashSwitchError = selected;
++                          });
++  requestUpdate();
++}
++
+ std::string SettingsActivity::settingValueText(const SettingInfo& setting) {
+   if (setting.action == SettingAction::HomeButton) return tr(STR_CONFIGURE);
+   if (setting.action == SettingAction::Plugins) return SETTINGS.pluginsEnabled ? tr(STR_ENABLED) : tr(STR_DISABLED);
+diff --git a/src/activities/settings/SettingsActivity.h b/src/activities/settings/SettingsActivity.h
+index 56b6b5cafc366c08d0df639d0a05e4ba4b80302a..f8f024461dda3f58c36bc3ba48a5817a3979126e 100644
+--- a/src/activities/settings/SettingsActivity.h
++++ b/src/activities/settings/SettingsActivity.h
+@@ -1,4 +1,5 @@
+ #pragma once
++#include <HalSystem.h>
+ #include <I18n.h>
+ 
+ #include <functional>
+@@ -32,6 +33,7 @@ enum class SettingAction {
+   KeyboardLayouts,
+   HomeButton,
+   About,
++  SwitchToSeeedash,
+ };
+ 
+ struct SettingInfo {
+@@ -191,6 +193,7 @@ class SettingsActivity final : public UiListActivity {
+   bool quickResumeTimeoutAutoEnabled = false;
+ 
+   OptionPopup optionPopup;
++  HalSystem::SeeedashBootStatus seeedashSwitchError = HalSystem::SeeedashBootStatus::Ready;
+ 
+   // Row structure (label/actionValue), rebuilt only when the setting list
+   // changes; rowValues_ holds the live value text, refreshed every
+@@ -202,6 +205,7 @@ class SettingsActivity final : public UiListActivity {
+   void rebuildRowItems();
+   void toggleSelectedSetting();
+   void openSleepTimeoutPicker();
++  void openSeeedashSwitch();
+   void applyUiSettingChange(uint8_t CrossPointSettings::* valuePtr);
+   void syncQuickResumeTimeoutForSleepScreen(bool sleepScreenChanged, bool quickResumeTimeoutChanged);
+   static std::string settingValueText(const SettingInfo& setting);
+diff --git a/src/network/FirmwareFlasher.cpp b/src/network/FirmwareFlasher.cpp
+index de52491eb4c1095d4283f7769b902e50c54be343..32a98386e0b837675a884f8dfcba03303ee35fd4 100644
+--- a/src/network/FirmwareFlasher.cpp
++++ b/src/network/FirmwareFlasher.cpp
+@@ -2,6 +2,7 @@
+ 
+ #include <Arduino.h>
+ #include <HalStorage.h>
++#include <HalSystem.h>
+ #include <Logging.h>
+ #include <esp_ota_ops.h>
+ #include <esp_partition.h>
+@@ -273,6 +274,10 @@ Result validateImageFile(const char* sdPath, size_t partitionSize) {
+ }
+ 
+ Result flashFromSdPath(const char* sdPath, ProgressCb onProgress, void* ctx, bool alreadyValidated) {
++  if (!HalSystem::firmwareUpdatesAllowed()) {
++    LOG_ERR("FLASH", "Update blocked to preserve Seeedash");
++    return Result::NO_PARTITION;
++  }
+   // Resolve destination first so we can size-check during validation. The full image-integrity
+   // pass below verifies header, segment table, XOR checksum and SHA256 trailer end-to-end before
+   // we touch otadata, so a truncated/corrupted .bin can never become the next boot target.
+diff --git a/src/network/OtaUpdater.cpp b/src/network/OtaUpdater.cpp
+index 1f64b229ca954fd30d9e7aa883898257d3fd163c..2f0d0516e5aef292758f98b9c5ce62d7555d02c4 100644
+--- a/src/network/OtaUpdater.cpp
++++ b/src/network/OtaUpdater.cpp
+@@ -6,6 +6,7 @@
+ // the local header last and break the build.
+ #include "HttpDownloader.h"
+ #include <Logging.h>
++#include <HalSystem.h>
+ #include <Memory.h>
+ #include <ReleaseJsonParser.h>
+ #include <esp_ota_ops.h>
+@@ -137,6 +138,10 @@ bool OtaUpdater::isUpdateNewer() const {
+ const std::string& OtaUpdater::getLatestVersion() const { return latestVersion; }
+ 
+ OtaUpdater::OtaUpdaterError OtaUpdater::installUpdate(ProgressCallback onProgress, void* ctx) {
++  if (!HalSystem::firmwareUpdatesAllowed()) {
++    LOG_ERR("OTA", "Update blocked to preserve Seeedash");
++    return INTERNAL_UPDATE_ERROR;
++  }
+   if (!isUpdateNewer()) {
+     return UPDATE_OLDER_ERROR;
+   }
+diff --git a/src/platform/skip_efuse_blk_check.c b/src/platform/skip_efuse_blk_check.c
+index 12a6f8da6f9a61db4f0dcb9dd8b10054de599bfa..a422ada947b0fd4378b3f2691b8db343c24ef259 100644
+--- a/src/platform/skip_efuse_blk_check.c
++++ b/src/platform/skip_efuse_blk_check.c
+@@ -4,8 +4,15 @@
+ // values that fail the check. Safe to skip: the eFuse block revision gate is
+ // a manufacturing concern, not a runtime safety issue.
+ #include <esp_err.h>
++#ifdef CROSSPOINT_STICKY_DUALBOOT
++esp_err_t __real_bootloader_common_check_efuse_blk_validity(uint32_t, uint32_t);
++#endif
+ esp_err_t __wrap_bootloader_common_check_efuse_blk_validity(uint32_t min_rev_full, uint32_t max_rev_full) {
++#ifdef CROSSPOINT_STICKY_DUALBOOT
++  return __real_bootloader_common_check_efuse_blk_validity(min_rev_full, max_rev_full);
++#else
+   (void)min_rev_full;
+   (void)max_rev_full;
+   return ESP_OK;
++#endif
+ }

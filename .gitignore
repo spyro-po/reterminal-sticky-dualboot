@@ -1,0 +1,16 @@
+.cache/
+.work/
+.build/
+.local/
+out/
+dist/
+.venv/
+__pycache__/
+*.py[cod]
+*.bin
+*.elf
+*.map
+*.log
+*.zip
+*.tar.gz
+.DS_Store

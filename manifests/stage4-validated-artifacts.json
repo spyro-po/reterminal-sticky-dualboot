@@ -1,0 +1,13 @@
+{
+  "stage": "Stage 4",
+  "crosspoint_bytes": 5315200,
+  "crosspoint_sha256": "0afb6c097f6a748e84ef4b7372c63fe03f4e517f727eac1927c1b96128638dfc",
+  "crosspoint_body_sha256": "3987548f6b9e1342e4cfd177b43790c28036ce3d12a6f70ed32cc4593bf383b1",
+  "bootloader_bytes": 24528,
+  "bootloader_sha256": "2a80f480274564c98ae0cc605e8999f0c25c4d91a40b6f196e2fb850a3fd93f5",
+  "bootloader_body_sha256": "7ae3b6ff66bc3fddef2d1cd72d69aab21de090ed9151fa7142ab59ae003cb0a9",
+  "table3072_sha256": "51fc24d4da9b5bafb4bef860874d891d6ad29044c1724e5f05882724d83be812",
+  "table4096_sha256": "a598360248f118f3c4ba348a2c2dd7e72839e6ead475f2b03d4ca6d1a328541b",
+  "public_crosspoint_binary": "WITHHELD_PENDING_COMBINED_BINARY_LICENSE_COMPLIANCE",
+  "as_tested_firmware_ui_version": "2.0.0-dualboot-menu-test"
+}

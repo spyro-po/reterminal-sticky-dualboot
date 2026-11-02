@@ -1,0 +1,13 @@
+reTerminal Sticky Dual Boot v1.0.0
+
+CrossPoint Reader: Copyright (c) 2025 CrossPoint Reader organization; MIT.
+FreeInk SDK: Copyright (c) 2026 FreeInk; MIT, with dependency notices.
+ESP-IDF bootloader entry adaptation: Copyright (c) 2015-2022 Espressif Systems (Shanghai) CO LTD; Apache-2.0.
+Original integration: Copyright (c) 2026 reTerminal Sticky Dual Boot contributors; MIT except identified Apache-2.0 file.
+
+Reader+ (Angel Esteban, MIT) was studied as a behavioral reference. No Reader+ source is included. Its license is retained for provenance, not as evidence of incorporated code.
+
+Seeed Studio supplies the factory Seeedash firmware via its official registry. It is downloaded separately for local use and is not included or relicensed here. This independent integration is not an official Seeed Studio product.
+
+Source license copies and FreeInk's dependency notices are in licenses/.
+The presence of a license text is not a claim that the entire combined firmware is covered by that license. See docs/LICENSING.md for unresolved binary-distribution obligations.
