@@ -8,6 +8,34 @@ Use Linux with a working Docker Engine, or Windows 11 with Docker Desktop's **Li
 
 Docker Desktop has its own licensing terms; check [Docker's Windows installation documentation](https://docs.docker.com/desktop/setup/install/windows-install/). See [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md) for the complete Windows path.
 
+## APT snapshot consistency
+
+The tools image uses `docker/apt.sources`: both the `debian` archive (`bookworm` and `bookworm-updates`) and the separate `debian-security` archive (`bookworm-security`) are pinned to **20261102T000000Z**. The base image digest and Python version are unchanged. The source file hash and required suites are recorded in `manifests/builder.lock.json` and checked offline.
+
+The pinned amd64 base image, created on 2026-10-28, already contains security-updated runtime packages. Replacing its sources with `bookworm main` alone removed the matching development/runtime dependencies:
+
+| Package family | Installed base runtime | Main-only snapshot | Matching security snapshot |
+| --- | --- | --- | --- |
+| OpenSSL | libssl3 3.0.22-1~deb12u2 | libssl-dev 3.0.20-1~deb12u2 | libssl-dev/libssl3 3.0.22-1~deb12u2 |
+| Perl | perl-base 5.36.0-7+deb12u4 | perl 5.36.0-7+deb12u3 | perl/perl-base 5.36.0-7+deb12u4 |
+
+Those versions were checked against the digest-verified official base layers and Debian's snapshot package indexes. This metadata check is not a successful Docker build or complete APT solver test. APT still verifies Debian signatures through the archive keyring. Only historical `Valid-Until` expiry is disabled, as [Debian's snapshot documentation](https://snapshot.debian.org/) requires for old snapshots. Live mirrors, unsigned/trusted sources, forced downgrades and ignored APT errors are not used.
+
+For the reported Ubuntu Docker Engine failure, pull this branch update and run from the repository root:
+
+```sh
+git pull --ff-only origin feature/docker-installer
+./sticky-installer.sh build --reproducibility-check
+```
+
+The changed source `COPY` invalidates the APT layer automatically. To isolate the tools-image test without compiling firmware, run:
+
+```sh
+docker build --no-cache --platform linux/amd64 --tag reterminal-sticky-dualboot-builder:1.1.0 .
+```
+
+The patch was prepared in an environment without a Docker daemon; its image build/run remains unverified locally. APT failure must stop the build. Do not bypass it or change the stable firmware combination to make installation proceed.
+
 ## Commands
 
 From the repository root:

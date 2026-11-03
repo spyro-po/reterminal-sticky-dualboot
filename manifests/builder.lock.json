@@ -12,7 +12,8 @@
   "files": {
     "docker/requirements-pio.lock": "7d7628b109b8ac2143c3fb2d782ea2c07277d7079fadc728f5a8154088509037",
     "docker/requirements-idf.lock": "a111ec243ec37f5f05c6390c5e32873bdc0699c3cb8001b989e71b81534318fd",
-    "docker/espidf.constraints.v5.4.txt": "682e0a340fbacf56b5364c544f74dbf1888676f5088b09dc27f66c785fe952ad"
+    "docker/espidf.constraints.v5.4.txt": "682e0a340fbacf56b5364c544f74dbf1888676f5088b09dc27f66c785fe952ad",
+    "docker/apt.sources": "c7fa78a5b88a32eaaaa5557683b8ca62e3ba4f024bb88335ecff24d10c486c38"
   },
   "distribution": "Dockerfile is for local image construction; no prebuilt image or firmware is published",
   "reproducibility_scope": "Pinned sources/base/OS snapshot/Python versions; generated binaries require a same-environment rebuild comparison; cross-host identity is not assumed",
@@ -20,5 +21,14 @@
     "checkout": "d23441a48e516b6c34aea4fa41551a30e30af803",
     "setup-python": "ece7cb06caefa5fff74198d8649806c4678c61a1",
     "upload-artifact": "b7c566a772e6b6bfb58ed0dc250532a479d7789f"
+  },
+  "debian_apt_suites": {
+    "debian": [
+      "bookworm",
+      "bookworm-updates"
+    ],
+    "debian-security": [
+      "bookworm-security"
+    ]
   }
 }

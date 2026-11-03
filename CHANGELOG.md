@@ -2,6 +2,8 @@
 
 ## v1.1.0 — Unreleased
 
+- Fix APT dependency conflicts by pinning main, updates and security streams to the same snapshot; preserve signature/dependency checks and add regression coverage.
+
 - Add a locally built Docker tools image with pinned Python/base digest, ESP-IDF/toolchain and Python dependencies.
 - Add list/build/verify/info/check-updates CLI commands and explicit Preserve Data backup/layout validation.
 - Export locally checked fresh images, matched code pairs, hashes and component reports; offer clean repeat-build comparison.

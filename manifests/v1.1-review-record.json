@@ -13,5 +13,16 @@
   "writes_tests_builds_by_reviewers": false,
   "runtime_code_changed": false,
   "hardware_claims_added": false,
-  "post_review_changes": "Main-agent verified final evidence and checksum inventory updates only"
+  "post_review_changes": "Main-agent verified final evidence and checksum inventory updates only",
+  "apt_snapshot_fix_review": {
+    "candidate_tree": "932f03f7c2d1730c71d6d64eab27ed8373ec221e",
+    "axes": {
+      "correctness": "No findings",
+      "architecture": "No findings",
+      "embedded": "No findings",
+      "i18n-docs": "No material findings; optional spacing typo corrected"
+    },
+    "review_mode": "Read-only; main agent ran all checks",
+    "docker_build": "Unavailable locally; no build success claimed"
+  }
 }

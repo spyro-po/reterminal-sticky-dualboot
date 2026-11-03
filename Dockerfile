@@ -1,8 +1,8 @@
 FROM python:3.12.16-slim-bookworm@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337
 
-# A fixed Debian snapshot pins OS dependency resolution as well as the base image.
-RUN rm -f /etc/apt/sources.list.d/debian.sources && \
-    printf '%s\n' 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20261102T000000Z bookworm main' > /etc/apt/sources.list && \
+# The base includes security updates: retain all three streams at the same snapshot.
+COPY docker/apt.sources /etc/apt/sources.list.d/sticky.sources
+RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources && \
     apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates git build-essential cmake ninja-build xz-utils libffi-dev libssl-dev && \
     rm -rf /var/lib/apt/lists/*
