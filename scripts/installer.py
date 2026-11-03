@@ -13,12 +13,16 @@ from common import ROOT,LOCK,require,sha,official
 from compatibility import manifest,select,MANIFEST
 from bundle import bundle_path,verify,export
 from fetch_seeedash import fetch
+from process_log import new_session,run_logged
 
 
 def build_bundle(args):
     entry=select(args.combination)
     target=bundle_path(args.output_root,args.directory or entry['id'])
     require(not target.exists(),'Output already exists; select a new --directory')
+    diagnostics=new_session(args.output_root/'diagnostics')
+    print('Private build diagnostics (persist after container exit): '+str(diagnostics),flush=True)
+    env=dict(os.environ,STICKY_BUILD_LOG_DIR=str(diagnostics))
     factory=official(fetch(ROOT/'.local/vendor/seeedash-1.2.0.bin').read_bytes())
     print('Official Seeedash SHA-256 verified. Preparing the pinned CrossPoint source and matched loader.',flush=True)
     labels=['installer-first']+(['installer-repeat'] if args.reproducibility_check else [])
@@ -27,7 +31,9 @@ def build_bundle(args):
         require(not project.is_symlink(),'Generated bootloader project must not be a symlink')
         # IDF rejects a cached project configured with a different Python environment.
         shutil.rmtree(project,ignore_errors=True)
-        subprocess.run([sys.executable,ROOT/'scripts/build.py','--label',label,'--clean-app'],check=True)
+        print('Building '+label+'; detailed progress: '+str(diagnostics/(label+'-driver.log')),flush=True)
+        run_logged([sys.executable,ROOT/'scripts/build.py','--label',label,'--clean-app'],
+                   ROOT,label+'-driver.log',env,diagnostics)
     first=ROOT/'.local/out'/labels[0]/'update'
     if len(labels)==2:
         other=ROOT/'.local/out'/labels[1]/'update'

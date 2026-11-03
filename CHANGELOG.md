@@ -2,6 +2,8 @@
 
 ## v1.1.0 — Unreleased
 
+- Preserve build diagnostics in unique output-volume directories after container removal; record actual exit codes/signals and show final stdout/stderr on failure. Never reuse an earlier host log or infer success from text.
+
 - Fix the ESP-IDF5.4 tool-selector no-op, explicitly create tool/constraints paths and check the installed compiler before dependency validation; add build/runtime path-order regressions.
 
 - Fix APT dependency conflicts by pinning main, updates and security streams to the same snapshot; preserve signature/dependency checks and add regression coverage.

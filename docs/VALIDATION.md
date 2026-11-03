@@ -22,7 +22,7 @@ The release preparation runs the following checks and records the final build re
 - Same-path clean rebuild comparison when recorded as passed; cross-host reproducibility is not claimed.
 - Git-index and source-archive publication allowlist, text-only content, size/path limits, secret patterns and manual provenance review. No scanner alone can prove the absence of every possible secret.
 
-Local detailed logs stay in ignored `.local/logs/`. Public manifests contain results and hashes, not local paths, serial numbers, network credentials or device dumps. Missing checks must be recorded as missing, never described as passed.
+Standalone native-build logs stay in ignored `.local/logs/<run-id>/`. Installer builds persist private logs in the output bind directory, `out/diagnostics/<run-id>/` by default, outside the six-file firmware bundle. Public manifests contain results and hashes, not local paths, serial numbers, network credentials or device dumps. Missing checks must be recorded as missing, never described as passed.
 
 ## Rebuild cache issue resolved during preparation
 

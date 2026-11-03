@@ -55,7 +55,55 @@ See [ESP-IDF5.4 tool documentation](https://docs.espressif.com/projects/esp-idf/
 
 The remaining Dockerfile order was reviewed: Docker `COPY` creates lock/source destination directories, venv creation precedes SDK tool invocations, Git checkout/pin checks precede installation, compiler/constraints checks precede the final source audit, and privilege drop occurs last. The entrypoint checks immutable prerequisites and creates its writable workspace/metadata/helper parents before copying or linking. Static regressions reject broken paths and reordered steps.
 
-Real tool installation and Python dependency checks passed in isolated host directories, including the runtime symlink/metadata layout. This is **not** a Docker image build/run result. A Docker daemon is still unavailable in the preparation environment. Rerun the Ubuntu commands above to validate the complete image and subsequent firmware build.
+Real tool installation and Python dependency checks passed in isolated host directories, including the runtime symlink/metadata layout. The owner subsequently reported a successful tools-image build on Ubuntu, followed by a runtime build failure. A Docker daemon is still unavailable in the preparation environment; no local container execution or new hardware test is claimed.
+
+## Build failure diagnostics
+
+Each installer build prints a unique diagnostic directory under the output mount:
+`/output/diagnostics/<UTC-timestamp>-<random-id>/`, available on the host as
+`out/diagnostics/<same-id>/` (or under your `--output` directory). It survives
+`docker run --rm` even if the build fails. These private logs are outside the
+six-file firmware bundle; do not upload the whole output directory.
+
+`installer-first-driver.log` captures the native builder, while
+`installer-first-clean.log` captures the actual PlatformIO clean command.
+Each has a matching `.status.json` with command, working directory, PID, run ID,
+UTC start/end times and actual `returncode`. Repeat builds use `installer-repeat`.
+Zero means success; negative values indicate POSIX signals. A spawn failure has
+`outcome: spawn_error` and no process return code. A missing completion time or
+`outcome: running` means no final status was recorded (for example, abrupt container
+termination); never infer success from the last output line.
+
+On failure the console includes the bounded final stdout/stderr and exact log/status
+paths. Inspect the inner tool's status as well as the driver's exit code. Files are
+created exclusively and each build gets a new directory, so retries do not replace
+earlier evidence. No environment dump or device backup is recorded. If the output
+directory is not writable by the invoking UID/GID, diagnostics creation fails
+before compilation. Fix ownership of your chosen output directory; do not run
+the container privileged or weaken validation.
+
+The earlier error referenced `.local/logs/installer-first-clean.log` inside the
+disposable container workspace. The launcher does not mount the host repository
+there. A same-named file in the host repository therefore cannot establish the
+result of that container run. Textual PlatformIO `SUCCESS` is not an exit status:
+a process can fail later or be terminated. The original runtime failure remains
+unidentified until a correlated log and status are collected; no error is ignored
+by this change. A native host clean returned0 in the preparation environment,
+which does not reproduce or validate the Docker run.
+
+Pull this update and retry on Ubuntu:
+
+```sh
+git pull --ff-only origin feature/docker-installer
+./sticky-installer.sh build --reproducibility-check
+ls -lt out/diagnostics
+```
+
+Choose the run ID printed by that invocation, then inspect its clean and driver
+logs/status files. Review logs for private paths or tool messages before sharing
+selected excerpts. If Docker itself is killed before the Python driver runs,
+also retain the host terminal output; no subprocess logger can record a process
+it never started.
 
 ## Commands
 

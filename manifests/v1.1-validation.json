@@ -1,9 +1,9 @@
 {
   "version": "1.1.0",
-  "phase": "host-validation-complete; local Docker unavailable; CI pending",
+  "phase": "host-validation-complete; owner reports Docker image build success; container firmware build diagnosis pending",
   "baseline": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
   "runtime_sources": "UNCHANGED: firmware, crosspoint integration, patches, partitions and v1.0.0 dependency lock",
-  "python_offline_tests": "PASS:40 unittest cases plus8 forbidden PlatformIO targets",
+  "python_offline_tests": "PASS:50 unittest cases plus8 forbidden PlatformIO targets",
   "locked_python_environments": "PASS: clean installs and pip check; all exact package pins verified",
   "docker_configuration": "PASS: digest/COPY/context policy audit; shell syntax and fake-Docker isolation tests",
   "docker_build_local": "UNAVAILABLE: no Docker daemon/socket; unprivileged user namespaces are denied",
@@ -54,6 +54,17 @@
     "python_dependencies": "PASS: actual check with locked environment and constraints; build and runtime-metadata layouts",
     "docker_build_run": "UNAVAILABLE locally: no daemon/socket; full image not verified",
     "firmware_rebuild": "NOT_RUN for this tooling-only fix; no firmware/partition/compatibility/version pins changed",
+    "new_hardware_tests": false
+  },
+  "build_process_diagnostics": {
+    "owner_report": "Tools image built on Ubuntu; runtime failed. Inspected clean SUCCESS log was from the host repository, not the disposable container workspace.",
+    "confirmed_defect": "Fixed filenames and container-private logs made evidence ambiguous and unavailable after --rm; exit-code comparison itself was correct.",
+    "original_platformio_failure": "UNKNOWN: no correlated original container return code or log survives; no success-text override or guessed root cause.",
+    "change": "Unique per-run output-volume diagnostics; raw merged output and structured real return codes/signals; bounded failure tails; exclusive filenames.",
+    "regressions": "Real child success/nonzero/signal exits, stdout/stderr tails, nested driver failure, spawn errors, stale/duplicate logs, permissions and retained failed-build diagnostics.",
+    "native_clean": "PASS: actual pinned PlatformIO clean returned0 under the locked host environment; does not reproduce Docker failure.",
+    "docker_execution_local": "NOT_RUN: daemon/socket unavailable",
+    "firmware_rebuild": "NOT_RUN: firmware, bootloader, partition sources and pins unchanged",
     "new_hardware_tests": false
   }
 }
