@@ -1,5 +1,7 @@
 # Recovery
 
+Windows11/PowerShell recovery commands and a pinned direct vendor download are also documented in [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md).
+
 Prepare recovery **before** changing Flash. Use stable USB-C power and a data cable. The board's CH343 bridge supports DTR/RTS auto-download. Confirm ROM download works on your physical board; Up/GPIO5 is **not** the GPIO0 boot strap. The physical Reset controls CHIP_PU.
 
 If auto-download fails, a qualified person must locate GPIO0 and CHIP_PU from the actual board revision and [Seeed hardware documentation](https://www.seeedstudio.com/sticky/docs/en/device-guide/hardware-overview/) before attempting manual ROM entry. GPIO0 also serves sensor I2C. Do not guess pads or assume Up+Power enters ROM. If ROM access remains unavailable, seek manufacturer service; software Reset cannot repair an invalid second-stage loader.

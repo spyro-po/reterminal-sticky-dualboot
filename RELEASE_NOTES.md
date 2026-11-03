@@ -1,13 +1,11 @@
-# v1.0.0 — Stage 4 source release
+# v1.1.0 — Docker-based Firmware Builder & Installer (unreleased)
 
-CrossPoint EPUB reading and factory Seeedash 1.2.0 share a Seeed reTerminal Sticky with ESP32-S3 and 32 MiB Flash. CrossPoint is the default. Select **Settings → System → Switch to Seeedash** to restart into Seeedash; physical Reset without Up returns to CrossPoint.
+Build the approved reTerminal Sticky Dual Boot source combination locally without manually installing ESP-IDF/PlatformIO on the host. The Bash launcher uses Docker Engine or Docker Desktop + WSL2. It offers list, build, verify, info and read-only check-updates commands. No command flashes a device.
 
-The owner reports the Stage 4 update and menu switching on battery working on their physical device. Up+Reset is confirmed with USB only. Newly rebuilt firmware has not been tested on hardware by the release preparer. Read `docs/VALIDATION.md` for actual offline results and limits.
+The sole stable source combination is CrossPoint2.0.0 at the approved commit plus factory Seeedash1.2.0 and the Stage4 loader/layout. Stable records the owner's prior device observations; a new Docker-generated artifact has no new physical validation. Unknown upstream versions remain experimental.
 
-**Public assets are source, patches, documentation, manifests, licenses and SHA256SUMS only.** There is no precompiled installation/update BIN in this release. Seeedash binary redistribution permission is unresolved; CrossPoint's combined-library binary compliance also requires further work. Do not mirror the vendor BIN or upload a locally merged image.
+Local builds download the official Seeedash artifact at runtime and verify its SHA-256, apply the pinned patch, compile the paired application/loader and run the existing integrity, NVS/Flash, link and partition gates. Output contains the local fresh32MiB image, paired segments, version report and SHA256SUMS. Preserve Data instructions require a real full-device backup, canonical table verification and explicit layout acknowledgement.
 
-Build locally using `docs/BUILD.md`. Choose destructive Fresh Install or a checked two-segment Update / Preserve Data for an already compatible device. Keep a verified full backup and establish ROM recovery before writing. Never install a loader/application from different pairs. Updates are not power-fail atomic.
+Public distribution remains source-only. No Seeedash BIN, complete Flash image, compiled CrossPoint BIN, device dump or prebuilt container image is included or automatically published. See docs/LICENSING.md. All standard OTA remains unsupported and forbidden; paired updates remain non-atomic.
 
-**All standard OTA, Seeedash firmware/resource/child-device updates and CrossPoint OTA are unsupported and forbidden.** Keep Seeedash offline and unpaired. Battery Up+Reset, broad sleep/wake behavior, runtime stack high-water and other hardware revisions remain unverified.
-
-SHA-256 manifests detect corruption, not publisher identity. No artifact in this release contains device credentials, private backups or user books.
+Docker execution, repeat compilation and physical validation are separate checks. Read the v1.1 validation record for actual available/unavailable results. This is a prepared development release: no v1.1.0 tag, merge or GitHub Release is authorized yet.

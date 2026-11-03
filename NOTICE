@@ -11,3 +11,5 @@ Seeed Studio supplies the factory Seeedash firmware via its official registry. I
 
 Source license copies and FreeInk's dependency notices are in licenses/.
 The presence of a license text is not a claim that the entire combined firmware is covered by that license. See docs/LICENSING.md for unresolved binary-distribution obligations.
+
+The v1.1.0 Docker recipe references upstream Docker/Python/Debian/ESP-IDF tooling downloaded separately. The ESP-IDF v5.4 dependency-constraint snapshot originates from dl.espressif.com; upstream attribution and applicable Apache-2.0 terms are retained. No compiled toolchain or application binary is included in this source tree.

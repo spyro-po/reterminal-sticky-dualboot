@@ -1,5 +1,7 @@
 # Pinned local build
 
+For the Docker path without manual host SDK installation, use [DOCKER_INSTALL.md](DOCKER_INSTALL.md). The native path below remains supported for development.
+
 Run from the repository root on Linux with Git, Python 3.12, a C/C++ host compiler (or the pinned Zig package), and ESP-IDF v5.4's supported build prerequisites. Several GiB of downloads and free disk space are needed. Initial dependency installation requires the network; verification after caching can run offline. The recipe pins source revisions and principal tools; it is not a complete cross-host hermetic dependency lock.
 
 ```sh
@@ -30,7 +32,7 @@ After the application link audit, the builder generates a private CrossPoint dig
 .local/out/build1/update/segments.json
 ```
 
-The pair is inseparable: the bootloader pins this specific CrossPoint body digest. Local build outputs and logs are ignored by Git. Neither success nor a valid hash proves the new pair works on hardware. The CrossPoint UI keeps the tested integration version string `2.0.0-dualboot-menu-test`; this repository's release version is `1.0.0`.
+The pair is inseparable: the bootloader pins this specific CrossPoint body digest. Local build outputs and logs are ignored by Git. Neither success nor a valid hash proves the new pair works on hardware. The CrossPoint UI keeps the tested integration version string `2.0.0-dualboot-menu-test`; the new tooling version is `1.1.0`; `segments.json` retains its compatible format version `1.0.0`.
 
 Create the optional local fresh image only after the build gates pass:
 

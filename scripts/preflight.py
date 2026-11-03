@@ -8,15 +8,20 @@ from common import *
 
 def load_pair(directory):
     directory=Path(directory)
+    require((directory/'segments.json').stat().st_size<=262144,'Update manifest exceeds size limit')
     meta=json.loads((directory/'segments.json').read_text())
+    require(isinstance(meta,dict),'Malformed update manifest: expected a JSON object')
     require(meta.get('version')=='1.0.0','Unsupported update manifest')
     require(meta.get('partition_table_sha256')==TABLE_SHA256,'Wrong manifest layout')
     entries=meta.get('segments',[])
-    require(len(entries)==2,'Exactly two code segments required')
+    require(isinstance(entries,list) and len(entries)==2,'Exactly two code segments required')
     blobs=[]
     for entry,(name,offset,limit) in zip(entries,[('bootloader.bin',0,0x8000),('crosspoint.bin',0x690000,0x600000)]):
+        require(isinstance(entry,dict) and {'file','offset','bytes','sha256','body_sha256'}<=set(entry),'Malformed segment entry')
+        require(isinstance(entry['offset'],str),'Segment offset must be a hexadecimal string')
         require(entry['file']==name and int(entry['offset'],0)==offset,'Unexpected filename/offset')
         require(not (directory/name).is_symlink(),'Symlink segment rejected')
+        require((directory/name).stat().st_size<=limit,'Segment exceeds partition bounds: '+name)
         data=(directory/name).read_bytes()
         info=image(data,limit,name)
         require(all(entry.get(k)==v for k,v in info.items()),'Manifest integrity mismatch: '+name)

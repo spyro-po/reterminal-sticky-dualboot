@@ -4,7 +4,7 @@
 
 CrossPoint starts by default. Its **Settings → System → Switch to Seeedash** menu starts the original Seeedash application. A physical Reset without Up returns to CrossPoint.
 
-Version **v1.0.0** packages the Stage 4 integration. The project owner reports that the Stage 4 update, both applications, USB switching, menu switching on battery and physical Reset return work on their device. This is a report from one device, not validation of every hardware revision. A build from this repository is a new artifact until tested on hardware; see [validation](docs/VALIDATION.md).
+The published **v1.0.0** packages the Stage 4 integration. **v1.1.0 is under development** and adds a local Docker builder/installer CLI without changing that runtime. The project owner reports that the Stage 4 update, both applications, USB switching, menu switching on battery and physical Reset return work on their device. This is a report from one device, not validation of every hardware revision. A build from this repository is a new artifact until tested on hardware; see [validation](docs/VALIDATION.md).
 
 > **All standard OTA updates are unsupported and forbidden.** Do not use CrossPoint OTA, Seeedash firmware/resource updates, or child-device updates. They can overwrite the other application or its data. Keep Seeedash offline and unpaired for this release.
 
@@ -56,6 +56,21 @@ flowchart TD
 ```
 
 The factory application and storage extents stay at their original addresses. CrossPoint has its own NVS. `app1` is a **test** application, not a second native OTA slot. The loader uses a separate two-sector `bootstate` journal. [Architecture and full partition map](docs/ARCHITECTURE.md).
+
+## Docker builder (v1.1.0 development)
+
+No manual host ESP-IDF or PlatformIO installation is needed with Docker Engine on Linux or Docker Desktop + WSL2 on Windows11:
+
+```sh
+./sticky-installer.sh list
+./sticky-installer.sh build
+./sticky-installer.sh verify --mode fresh
+./sticky-installer.sh info --mode fresh
+```
+
+The only approved source combination is **CrossPoint2.0.0 + Seeedash1.2.0 / Stage4**. All image creation is local at runtime; the tools image and public source contain no Seeedash or generated Flash image. Local output is in `out/cp-2.0.0-seeedash-1.2.0/`. No command flashes a device. For Preserve Data, a verified full device backup and explicit protected-layout acknowledgement are mandatory.
+
+Read [Docker setup](docs/DOCKER_INSTALL.md), [Windows11 steps](docs/WINDOWS_INSTALL.md), [compatibility](docs/COMPATIBILITY.md) and [upgrading](docs/UPGRADING.md). Docker execution, source compilation and physical device validation are separate results; see the [v1.1 validation record](manifests/v1.1-validation.json). Unknown upstream versions stay experimental and cannot be selected as stable.
 
 ## Install
 

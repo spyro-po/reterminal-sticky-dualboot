@@ -1,5 +1,7 @@
 # Fresh Install — destructive
 
+Docker builders can create the complete local image using [DOCKER_INSTALL.md](DOCKER_INSTALL.md); Windows users should follow [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md).
+
 This path replaces all Flash configuration, books/resources stored in Flash and credentials. It does not preserve existing user data. For an existing compatible Dual Boot installation use [Update](UPDATE.md). Backups can contain passwords and keys; store them outside the repository and never upload them.
 
 First establish [ROM recovery](RECOVERY.md), verify 32 MiB Flash and unrestricted/unencrypted operation, and make and verify a complete backup from this chip. Do not burn eFuses, use `--force`, or change the Flash layout to force a failed preflight to pass.

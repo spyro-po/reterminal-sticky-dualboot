@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.1.0 — Unreleased
+
+- Add a locally built Docker tools image with pinned Python/base digest, ESP-IDF/toolchain and Python dependencies.
+- Add list/build/verify/info/check-updates CLI commands and explicit Preserve Data backup/layout validation.
+- Export locally checked fresh images, matched code pairs, hashes and component reports; offer clean repeat-build comparison.
+- Add a versioned compatibility gate for the sole approved CrossPoint2.0.0 + Seeedash1.2.0 source combination.
+- Add Windows11/WSL2/PowerShell installation and recovery documentation.
+- Add read-only upstream monitoring and offline/container smoke CI; no automatic promotion, firmware upload or release.
+- Preserve Stage4 runtime, partitions, NVS/OTA protections and source-only distribution policy. New Docker output is not hardware certified.
+
 ## v1.0.0 — 2026-11-02
 
 - First source release of the Stage 4 reTerminal Sticky Dual Boot integration.

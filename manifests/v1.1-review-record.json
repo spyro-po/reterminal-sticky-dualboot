@@ -1,0 +1,17 @@
+{
+  "version": "1.1.0",
+  "base": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
+  "initial_tree": "baa5928db4525b31fb99b1db4ed18d88deaed063",
+  "axes": {
+    "correctness": "No actionable finding for documented Docker path",
+    "architecture": "No findings",
+    "embedded": "No findings",
+    "i18n-docs": "P2: Docker/Linux users were referred to native-only paths; explicit Linux bundle installation/readback/recovery commands added"
+  },
+  "optional_native_lifecycle_note": "Internal installer.py expects a disposable workspace; documented native developer interface remains build.py with explicit labels. Docker always creates a fresh workspace.",
+  "followup": "PASS: P2 addressed in tree2ae1ee243361cbc196a19efdb2c368a2c8cff930; no further documentation findings",
+  "writes_tests_builds_by_reviewers": false,
+  "runtime_code_changed": false,
+  "hardware_claims_added": false,
+  "post_review_changes": "Main-agent verified final evidence and checksum inventory updates only"
+}

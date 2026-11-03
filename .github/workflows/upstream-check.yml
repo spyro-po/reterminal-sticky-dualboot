@@ -1,0 +1,53 @@
+name: Builder and compatibility checks
+on:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: sticky-checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  offline-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12.16'
+      - name: Offline source, bundle, promotion and launcher checks
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Read upstream metadata only
+        if: github.event_name != 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/check_updates.py --output out/upstream-report.json
+      - name: Store text compatibility report only
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: upstream-compatibility-report
+          path: out/upstream-report.json
+          if-no-files-found: error
+          retention-days: 14
+  docker-smoke:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Build local tools image; never publish to a registry
+        run: docker build --platform linux/amd64 --tag sticky-builder-ci:1.1.0 .
+      - name: Run the source-only list command without network, devices or privileges
+        run: >-
+          docker run --rm --platform linux/amd64 --network none
+          --cap-drop ALL --security-opt no-new-privileges
+          --user "$(id -u):$(id -g)" sticky-builder-ci:1.1.0 list

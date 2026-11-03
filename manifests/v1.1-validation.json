@@ -1,0 +1,31 @@
+{
+  "version": "1.1.0",
+  "phase": "host-validation-complete; local Docker unavailable; CI pending",
+  "baseline": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
+  "runtime_sources": "UNCHANGED: firmware, crosspoint integration, patches, partitions and v1.0.0 dependency lock",
+  "python_offline_tests": "PASS:23 unittest cases plus8 forbidden PlatformIO targets",
+  "locked_python_environments": "PASS: clean installs and pip check; all exact package pins verified",
+  "docker_configuration": "PASS: digest/COPY/context policy audit; shell syntax and fake-Docker isolation tests",
+  "docker_build_local": "UNAVAILABLE: no Docker daemon/socket; unprivileged user namespaces are denied",
+  "docker_image_execution_local": "NOT_RUN",
+  "ci_docker_smoke": "PENDING: tools-image build/list job is configured, no firmware download in CI",
+  "native_pipeline_reproducibility": "PASS: two clean application compilations and fresh loader projects under the locked Python environments; both segments byte-identical",
+  "actual_existing_bundle_export": "PASS: v1.0.0 local software-test pair and factory-derived image; all factory extents unchanged",
+  "preserve_data_simulation": "PASS: synthetic canaries and factory-derived image, not a new device backup/read",
+  "windows_execution": "NOT_RUN; PowerShell commands documented with exit-code guards",
+  "new_hardware_tests": false,
+  "device_flash_operations": false,
+  "other_containers_modified": false,
+  "firmware_redistribution": "FORBIDDEN under current policy; no BIN, vendor or complete Flash artifacts in source/CI uploads",
+  "independent_reviews": "PASS: four initial read-only axes; Linux Docker instruction-path P2 fixed and targeted documentation follow-up passed",
+  "public_release": "NOT_AUTHORIZED; no v1.1.0 tag or release",
+  "native_all_existing_gates": "PASS: final ELF/map/NVS/WiFi callback audit, IDF/table generators, C/C++ policy/menu/journal fault tests, flash isolation and SHA pins",
+  "full_local_export_and_verify": "PASS: six-file bundle exported only after validation; fresh and Preserve Data verification passed using a factory-derived image, not a device backup",
+  "original_working_inputs": "PASS: baseline source/Stage4pair/vendor hashes unchanged",
+  "upstream_metadata_check": "PASS: observed CP2.0.0 / Seeedash1.2.0; no newer version labels; no BIN fetch or stable changes",
+  "local_artifact_sha256": {
+    "bootloader.bin": "1bf18960be959d423eade349d110e47ac21ae75b1c8bc6dce8090a751f991edd",
+    "crosspoint.bin": "d2b844ddf71dddd6696c85db89ec122517489dc140b4d6fe0a88c694a3b60b00",
+    "fresh-32MiB.bin": "269457f131624ab0bbfbaf1f107da237e4be838079503f0212043cb5716b77f3"
+  }
+}
