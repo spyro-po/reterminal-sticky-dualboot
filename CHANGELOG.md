@@ -2,6 +2,8 @@
 
 ## v1.1.0 — Unreleased
 
+- Initialize the pinned PlatformIO environment before the first clean; check framework source metadata and ESP32-S3 SDK files on cold and warm caches without bypassing CrossPoint pre-scripts.
+
 - Preserve build diagnostics in unique output-volume directories after container removal; record actual exit codes/signals and show final stdout/stderr on failure. Never reuse an earlier host log or infer success from text.
 
 - Fix the ESP-IDF5.4 tool-selector no-op, explicitly create tool/constraints paths and check the installed compiler before dependency validation; add build/runtime path-order regressions.

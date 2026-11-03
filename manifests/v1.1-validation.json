@@ -1,9 +1,9 @@
 {
   "version": "1.1.0",
-  "phase": "host-validation-complete; owner reports Docker image build success; container firmware build diagnosis pending",
+  "phase": "host-validation-complete; owner confirms tools-image build and diagnostics; container firmware build retest pending",
   "baseline": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
   "runtime_sources": "UNCHANGED: firmware, crosspoint integration, patches, partitions and v1.0.0 dependency lock",
-  "python_offline_tests": "PASS:50 unittest cases plus8 forbidden PlatformIO targets",
+  "python_offline_tests": "PASS:60 unittest cases plus8 forbidden PlatformIO targets",
   "locked_python_environments": "PASS: clean installs and pip check; all exact package pins verified",
   "docker_configuration": "PASS: digest/COPY/context policy audit; shell syntax and fake-Docker isolation tests",
   "docker_build_local": "UNAVAILABLE: no Docker daemon/socket; unprivileged user namespaces are denied",
@@ -65,6 +65,22 @@
     "native_clean": "PASS: actual pinned PlatformIO clean returned0 under the locked host environment; does not reproduce Docker failure.",
     "docker_execution_local": "NOT_RUN: daemon/socket unavailable",
     "firmware_rebuild": "NOT_RUN: firmware, bootloader, partition sources and pins unchanged",
+    "new_hardware_tests": false
+  },
+  "platformio_first_clean_initialization": {
+    "baseline": "7bd35ea",
+    "owner_report": "Tools image builds and persistent logs work; first clean fails with Path(None) in unchanged CrossPoint patch_pioarduino_cache.py.",
+    "root_cause": "PlatformIO clean runs SCons pre-scripts and returns before install_project_env_dependencies; global platform install leaves Arduino/IDF frameworks optional and absent in fresh installed-package cache.",
+    "cold_cache_negative_control": "PASS: actual pinned PlatformIO reproduced the same TypeError and returncode1; three framework packages absent before initialization.",
+    "cold_cache_after_fix": "PASS: actual environment-scoped pkg install downloaded pinned frameworks and libraries, prerequisite validation passed, clean returned0.",
+    "same_cache_repeat": "PASS: actual repeated project initialization and clean returned0.",
+    "previously_populated_cache": "PASS: actual project initialization and clean returned0.",
+    "regressions": "10 new offline tests: cold/warm orchestration, package-install errors, incomplete/mismatched framework metadata, altered source URLs and ESP32-S3 SDK file requirements.",
+    "diagnostics": "UNCHANGED: unique output-volume logs and real return-code status; adds per-pass dependencies logs.",
+    "source_integrity": "PASS: prepared CrossPoint still equals the approved patch; original integration/firmware/bootloader/partitions/version locks unchanged.",
+    "licenses": "Original host-only orchestration/check code under scoped MIT; no new dependency or copied upstream code.",
+    "docker_execution_local": "NOT_RUN: Docker daemon/socket unavailable; owner Ubuntu retest required.",
+    "firmware_compilation": "NOT_RUN for this initialization-only fix; previous reproducibility results remain baseline evidence.",
     "new_hardware_tests": false
   }
 }

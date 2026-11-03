@@ -13,6 +13,7 @@ from common import ROOT,LOCK,require,sha,image,partition_table,parse_table,valid
 from prepare_crosspoint import prepare,CHECKOUT
 from elf_audit import crosspoint_checks
 from process_log import new_session,run_logged
+from pio_dependencies import initialize_project
 
 
 def environment():
@@ -62,6 +63,7 @@ def build(args):
     checkout=prepare()
     command=pio_command()
     prepare_platform(command,env)
+    initialize_project(command,checkout,args.label,env,run)
     if args.clean_app:
         run(command+['run','-e','sticky-dualboot-test','-t','clean'],checkout,args.label+'-clean.log',env)
     run(command+['run','-e','sticky-dualboot-test'],checkout,args.label+'-crosspoint.log',env)

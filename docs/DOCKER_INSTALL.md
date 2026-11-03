@@ -59,6 +59,47 @@ Real tool installation and Python dependency checks passed in isolated host dire
 
 ## Build failure diagnostics
 
+### First clean on an empty PlatformIO cache
+
+The pinned PlatformIO core runs a clean target through SCons and its `pre:`
+scripts, then returns before the normal project-dependency installation stage.
+Installing the platform globally does not select the Arduino environment:
+`framework-arduinoespressif32`, `framework-arduinoespressif32-libs` and
+`framework-espidf` remain optional and can be absent. CrossPoint's unchanged
+`patch_pioarduino_cache.py` needs the libs package even during clean. Without
+it, `get_package_dir` returns `None` and `Path(None)` raises `TypeError`.
+
+The builder now runs `pio pkg install --environment sticky-dualboot-test --no-save`
+in the prepared, pinned checkout before clean or compilation. This installs the
+environment's declared dependencies without running SCons/pre-scripts and does
+not rewrite the project configuration. It uses the same approved platform,
+framework URLs and exact library versions/Git commits as a normal build; there
+is no update-to-latest operation. No version pin was changed.
+
+Before installation, the selected framework URLs in the cached platform manifest
+must match the existing dependency lock. After installation, the three required
+framework packages must have matching source/manifest metadata and the libs
+package must contain ESP32-S3 `sdkconfig` or the rebuilt cache's `sdkconfig.orig`.
+Incomplete or mismatched packages stop the build before clean. These are
+prerequisite checks, not new archive SHA-256 guarantees; existing final-link,
+configuration, partition and image-integrity gates remain mandatory.
+
+Initialization also runs for an existing cache, including the second reproducibility
+pass, so a partial cache is not assumed ready. CrossPoint's pre-scripts still run
+during clean/build; none are edited, disabled or skipped. Docker keeps its private
+cache inside each disposable container; no host package installation is required.
+The new step's output/status are retained as `installer-first-dependencies.log`
+and `installer-first-dependencies.status.json` (and `installer-repeat-*`).
+
+Validation outside Docker reproduced the original `TypeError` on a separate
+empty installed-package cache seeded only with the locked Python environment.
+After downloading the approved project dependencies, clean returned0. Repeating
+initialization and clean on that cache also returned0; a previously populated
+cache passed separately. No firmware compilation, container execution or new
+hardware test was performed for this fix.
+
+### Locating the correct run
+
 Each installer build prints a unique diagnostic directory under the output mount:
 `/output/diagnostics/<UTC-timestamp>-<random-id>/`, available on the host as
 `out/diagnostics/<same-id>/` (or under your `--output` directory). It survives

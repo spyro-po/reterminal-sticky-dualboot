@@ -44,6 +44,13 @@ This output contains Seeedash and must not be uploaded. The official download is
 
 For a clean same-path reproducibility comparison, run the builder again with `--clean-app --label build2`, then compare both code-segment hashes. `SOURCE_DATE_EPOCH` is fixed in the source lock. Cross-host or different-path bit reproducibility is not promised. Saved dependency names and observed build versions are in `manifests/`; do not use floating upstream sources for this release.
 
+The native builder explicitly installs the selected PlatformIO environment's
+dependencies before clean/build and checks framework source metadata and ESP32-S3
+SDK files. This is required on an empty cache because PlatformIO clean executes
+CrossPoint pre-scripts before its normal dependency-installation stage. No
+CrossPoint script is bypassed. See [DOCKER_INSTALL.md](DOCKER_INSTALL.md#first-clean-on-an-empty-platformio-cache)
+for the cold-cache failure and retained initialization logs.
+
 Host checks after preparing dependencies:
 
 ```sh
