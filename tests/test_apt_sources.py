@@ -14,7 +14,7 @@ from common import ROOT,sha
 class AptSourcesTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name)
-        for name in ['Dockerfile','.dockerignore','manifests/builder.lock.json','docker/apt.sources']:
+        for name in ['Dockerfile','.dockerignore','manifests/builder.lock.json','docker/apt.sources','docker/entrypoint.sh']:
             target=self.root/name;target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copyfile(ROOT/name,target)
         self.patch=mock.patch.object(audit_builder,'ROOT',self.root);self.patch.start()

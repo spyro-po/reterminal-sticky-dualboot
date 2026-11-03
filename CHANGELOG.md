@@ -2,6 +2,8 @@
 
 ## v1.1.0 — Unreleased
 
+- Fix the ESP-IDF5.4 tool-selector no-op, explicitly create tool/constraints paths and check the installed compiler before dependency validation; add build/runtime path-order regressions.
+
 - Fix APT dependency conflicts by pinning main, updates and security streams to the same snapshot; preserve signature/dependency checks and add regression coverage.
 
 - Add a locally built Docker tools image with pinned Python/base digest, ESP-IDF/toolchain and Python dependencies.

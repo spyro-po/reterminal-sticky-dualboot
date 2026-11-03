@@ -62,6 +62,51 @@ def apt_sources(lock):
     return entries
 
 
+
+def idf_layout(lines,lock):
+    """Check the known build/runtime path contract before any image is constructed."""
+    env={};env_at={}
+    for index,line in enumerate(lines):
+        if line.startswith('ENV '):
+            for field in shlex.split(line)[1:]:
+                key,value=field.split('=',1);env[key]=value;env_at[key]=index
+    required={'IDF_PATH':'/opt/esp/idf','IDF54_PATH':'/opt/esp/idf',
+              'IDF54_PYTHON':'/opt/esp/idf-python/bin/python','IDF_PYTHON_ENV_PATH':'/opt/esp/idf-python',
+              'IDF_TOOLS_PATH':'/opt/esp/tools','HOME':'/tmp/sticky-home'}
+    require(all(env.get(key)==value for key,value in required.items()),'Inconsistent SDK tools/Python environment paths')
+    require(env.get('IDF_PYTHON_CHECK_CONSTRAINTS','yes').lower() not in ('0','no','n'), 'SDK constraints must remain enabled')
+    venv=[i for i,line in enumerate(lines) if line.startswith('RUN ') and 'python -m venv /opt/esp/idf-python' in line]
+    sdk=[(i,' '.join(line.split())) for i,line in enumerate(lines) if line.startswith('RUN ') and 'idf_tools.py' in line]
+    require(len(venv)==1 and len(sdk)==1,'SDK Python creation and tool-install phases must be explicit')
+    index,command=sdk[0]
+    locks='COPY docker/requirements-pio.lock docker/requirements-idf.lock docker/espidf.constraints.v5.4.txt /opt/sticky/locks/'
+    require(locks in lines and lines.index(locks)<venv[0],'Copy Python locks before creating/installing the environments')
+    audit_runs=[i for i,line in enumerate(lines) if line.startswith('RUN ') and 'scripts/audit_builder.py --source' in line]
+    require(len(audit_runs)==1 and index<audit_runs[0]<lines.index('USER 1000:1000'),'Install/audit image inputs before dropping privileges')
+    require(max(env_at[key] for key in required)<venv[0]<index,'Create the SDK Python environment before invoking its tools')
+    require('test "$(git -C /opt/esp/idf rev-parse HEAD)" = '+lock['esp_idf_commit'] in command,'SDK source commit is not checked')
+    compiler='$IDF_TOOLS_PATH/tools/xtensa-esp-elf/'+lock['esp_idf_toolchain']+'/xtensa-esp-elf/bin/xtensa-esp-elf-gcc'
+    ordered=['mkdir -p "$IDF_TOOLS_PATH"',
+             '"$IDF54_PYTHON" "$IDF_PATH/tools/idf_tools.py" install --targets esp32s3 xtensa-esp-elf',
+             'test -x "'+compiler+'"','"'+compiler+'" --version',
+             'cp /opt/sticky/locks/espidf.constraints.v5.4.txt "$IDF_TOOLS_PATH/espidf.constraints.v5.4.txt"',
+             '"$IDF54_PYTHON" "$IDF_PATH/tools/idf_tools.py" check-python-dependencies']
+    positions=[command.find(step) for step in ordered]
+    require(all(p>=0 for p in positions) and positions==sorted(positions),'SDK install must create directories, verify the compiler, copy constraints and check Python in order')
+    require('xtensa-esp-elf@' not in command and '--no-constraints' not in command,'Unsupported version-qualified install or disabled dependency constraints')
+    runtime=(ROOT/'docker/entrypoint.sh').read_text()
+    for guard in ['test -x /opt/esp/idf-python/bin/python',
+                  'test -x /opt/esp/tools/tools/xtensa-esp-elf/'+lock['esp_idf_toolchain']+'/xtensa-esp-elf/bin/xtensa-esp-elf-gcc',
+                  'test -r /opt/sticky/locks/espidf.constraints.v5.4.txt']:
+        require(guard in runtime,'Runtime SDK installation guard missing')
+    require('mkdir -p "$HOME/.espressif"' in runtime and 'ln -s /opt/esp/tools/tools' in runtime and runtime.index('mkdir -p "$HOME/.espressif"')<runtime.index('ln -s /opt/esp/tools/tools'), 'Create runtime tool metadata directory before linking installed tools')
+    workspace='mkdir -p "$HOME" /tmp/sticky-project'
+    require(workspace in runtime and runtime.index(workspace)<runtime.index('cp -R /opt/sticky/source/.'),'Create the writable runtime workspace before copying source')
+    penv='mkdir -p /tmp/sticky-project/.cache/platformio'
+    require(penv in runtime and runtime.index(penv)<runtime.index('cp -R /opt/sticky/python'),'Create the helper environment parent before copying it')
+    require('export IDF_TOOLS_PATH="$HOME/.espressif"' in runtime,'Runtime SDK metadata must be writable by the container user')
+
+
 def configuration():
     lock=json.loads((ROOT/'manifests/builder.lock.json').read_text())
     apt_sources(lock)
@@ -76,6 +121,7 @@ def configuration():
             lines.append(pending);pending=''
     require(not pending,'Unterminated Dockerfile instruction')
     require(lines[0]=='FROM '+lock['base_image'],'Docker FROM does not match the locked image digest')
+    idf_layout(lines,lock)
     copies=[]
     allowed={'VERSION','README.md','LICENSE','NOTICE','SOURCE_FILES.sha256','requirements-build.txt',
              'firmware','crosspoint','partitions','patches','scripts','tests','manifests','licenses','docker',

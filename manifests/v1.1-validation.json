@@ -3,7 +3,7 @@
   "phase": "host-validation-complete; local Docker unavailable; CI pending",
   "baseline": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
   "runtime_sources": "UNCHANGED: firmware, crosspoint integration, patches, partitions and v1.0.0 dependency lock",
-  "python_offline_tests": "PASS:29 unittest cases (including6 APT source regressions) plus8 forbidden PlatformIO targets",
+  "python_offline_tests": "PASS:40 unittest cases plus8 forbidden PlatformIO targets",
   "locked_python_environments": "PASS: clean installs and pip check; all exact package pins verified",
   "docker_configuration": "PASS: digest/COPY/context policy audit; shell syntax and fake-Docker isolation tests",
   "docker_build_local": "UNAVAILABLE: no Docker daemon/socket; unprivileged user namespaces are denied",
@@ -43,5 +43,17 @@
     "forbidden_workarounds": false,
     "new_hardware_tests": false,
     "offline_tests": "PASS: complete signed streams; missing suites, mixed/live sources, signature and dependency bypasses rejected"
+  },
+  "idf_tools_path_fix": {
+    "baseline": "a460a4f",
+    "owner_test": "APT phase now passes; image failed copying constraints because tools root was absent",
+    "root_cause": "Pinned IDF5.4 expand_tools_arg filters TOOL@VERSION against bare names, producing an empty successful installation",
+    "versioned_selector_reproduction": "PASS: actual pinned script returned0 with empty tool list and no directory",
+    "bare_tool_install": "PASS: actual pinned SDK installed xtensa-esp-elf for esp32s3 in an isolated host tools root",
+    "compiler": "PASS: exact esp-14.2.0_20241119 compiler path and version",
+    "python_dependencies": "PASS: actual check with locked environment and constraints; build and runtime-metadata layouts",
+    "docker_build_run": "UNAVAILABLE locally: no daemon/socket; full image not verified",
+    "firmware_rebuild": "NOT_RUN for this tooling-only fix; no firmware/partition/compatibility/version pins changed",
+    "new_hardware_tests": false
   }
 }

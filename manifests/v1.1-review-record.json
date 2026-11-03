@@ -24,5 +24,17 @@
     },
     "review_mode": "Read-only; main agent ran all checks",
     "docker_build": "Unavailable locally; no build success claimed"
+  },
+  "idf_tools_paths_review": {
+    "candidate_tree": "dbfa67eac782ece11a145299e2531031b8a27ed4",
+    "axes": {
+      "correctness": "No findings",
+      "architecture": "No findings",
+      "embedded": "No findings",
+      "i18n-docs": "No findings"
+    },
+    "actual_host_checks": "Pinned SDK install, exact compiler and dependency checks passed in isolated build/runtime-metadata roots",
+    "docker_image": "Not built/run locally; daemon unavailable",
+    "runtime_and_version_pins": "Unchanged"
   }
 }

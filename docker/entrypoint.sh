@@ -1,6 +1,10 @@
 #!/bin/sh
 set -eu
 umask 077
+# Fail before creating a workspace if the immutable SDK installation is incomplete.
+test -x /opt/esp/idf-python/bin/python
+test -x /opt/esp/tools/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp-elf-gcc
+test -r /opt/sticky/locks/espidf.constraints.v5.4.txt
 mkdir -p "$HOME" /tmp/sticky-project
 # Only the source allowlist baked into the image is copied, never host source/cache.
 cp -R /opt/sticky/source/. /tmp/sticky-project/

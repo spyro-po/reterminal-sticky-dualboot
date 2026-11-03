@@ -34,9 +34,12 @@ RUN git clone --branch v5.4 --depth 1 --recurse-submodules --shallow-submodules 
     test "$(git -C /opt/esp/idf rev-parse HEAD)" = 67c1de1eebe095d554d281952fde63c16ee2dca0 && \
     git config --system --add safe.directory /opt/esp/idf && \
     git -C /opt/esp/idf submodule foreach --recursive 'git config --system --add safe.directory "$PWD"' && \
-    python /opt/esp/idf/tools/idf_tools.py install xtensa-esp-elf@esp-14.2.0_20241119 && \
-    cp /opt/sticky/locks/espidf.constraints.v5.4.txt /opt/esp/tools/ && \
-    /opt/esp/idf-python/bin/python /opt/esp/idf/tools/idf_tools.py check-python-dependencies
+    mkdir -p "$IDF_TOOLS_PATH" && \
+    "$IDF54_PYTHON" "$IDF_PATH/tools/idf_tools.py" install --targets esp32s3 xtensa-esp-elf && \
+    test -x "$IDF_TOOLS_PATH/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp-elf-gcc" && \
+    "$IDF_TOOLS_PATH/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp-elf-gcc" --version && \
+    cp /opt/sticky/locks/espidf.constraints.v5.4.txt "$IDF_TOOLS_PATH/espidf.constraints.v5.4.txt" && \
+    "$IDF54_PYTHON" "$IDF_PATH/tools/idf_tools.py" check-python-dependencies
 
 # No CrossPoint compile, vendor download, Flash image or host cache is in a layer.
 COPY VERSION README.md LICENSE NOTICE SOURCE_FILES.sha256 requirements-build.txt /opt/sticky/source/

@@ -36,6 +36,27 @@ docker build --no-cache --platform linux/amd64 --tag reterminal-sticky-dualboot-
 
 The patch was prepared in an environment without a Docker daemon; its image build/run remains unverified locally. APT failure must stop the build. Do not bypass it or change the stable firmware combination to make installation proceed.
 
+## ESP-IDF tool installation and paths
+
+The pinned SDK commit `67c1de1eebe095d554d281952fde63c16ee2dca0` has a tool-selection issue: `idf_tools.py install xtensa-esp-elf@esp-14.2.0_20241119` is filtered against bare tool names before version parsing. It returns0 with an empty installation list and can leave the tools directory absent. This was reproduced against the real pinned script on the host; creating the directory alone would not verify that a compiler was installed.
+
+The image now creates `IDF_TOOLS_PATH` explicitly, calls `install --targets esp32s3 xtensa-esp-elf`, checks the compiler at the exact versioned path and runs its `--version`, then copies constraints to a complete filename and runs the dependency check. The selected recommended version remains `esp-14.2.0_20241119`, fixed by the unchanged SDK commit/tool metadata and checked by the compiler path. The tool archive SHA-256 and all dependency version pins are unchanged. No upstream SDK source is patched.
+
+| Setting | Image construction | Unprivileged runtime |
+| --- | --- | --- |
+| IDF_PATH / IDF54_PATH | `/opt/esp/idf` | Same immutable SDK |
+| IDF_PYTHON_ENV_PATH | `/opt/esp/idf-python` | Same Python environment |
+| IDF54_PYTHON | `/opt/esp/idf-python/bin/python` | Same interpreter for SDK actions |
+| IDF_TOOLS_PATH | `/opt/esp/tools` | `$HOME/.espressif`, writable metadata and constraints |
+| Compiler | `/opt/esp/tools/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp-elf-gcc` | Reached through the runtime `tools` symlink |
+| Constraints | `/opt/esp/tools/espidf.constraints.v5.4.txt` | `$HOME/.espressif/espidf.constraints.v5.4.txt` |
+
+See [ESP-IDF5.4 tool documentation](https://docs.espressif.com/projects/esp-idf/en/v5.4/esp32/api-guides/tools/idf-tools.html). The dependency check uses the explicit SDK Python environment and the pinned constraints file; it is not disabled. The custom environment is installed from exact package locks rather than downloading a new Python dependency set.
+
+The remaining Dockerfile order was reviewed: Docker `COPY` creates lock/source destination directories, venv creation precedes SDK tool invocations, Git checkout/pin checks precede installation, compiler/constraints checks precede the final source audit, and privilege drop occurs last. The entrypoint checks immutable prerequisites and creates its writable workspace/metadata/helper parents before copying or linking. Static regressions reject broken paths and reordered steps.
+
+Real tool installation and Python dependency checks passed in isolated host directories, including the runtime symlink/metadata layout. This is **not** a Docker image build/run result. A Docker daemon is still unavailable in the preparation environment. Rerun the Ubuntu commands above to validate the complete image and subsequent firmware build.
+
 ## Commands
 
 From the repository root:
