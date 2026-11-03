@@ -14,6 +14,7 @@ from prepare_crosspoint import prepare,CHECKOUT
 from elf_audit import crosspoint_checks
 from process_log import new_session,run_logged
 from pio_dependencies import initialize_project
+from app_idf_env import initialize_app_idf
 
 
 def environment():
@@ -64,6 +65,7 @@ def build(args):
     command=pio_command()
     prepare_platform(command,env)
     initialize_project(command,checkout,args.label,env,run)
+    initialize_app_idf(checkout,args.label,env,run)
     if args.clean_app:
         run(command+['run','-e','sticky-dualboot-test','-t','clean'],checkout,args.label+'-clean.log',env)
     run(command+['run','-e','sticky-dualboot-test'],checkout,args.label+'-crosspoint.log',env)

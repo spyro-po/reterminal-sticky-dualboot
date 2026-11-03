@@ -14,6 +14,7 @@ from compatibility import manifest,select,MANIFEST
 from bundle import bundle_path,verify,export
 from fetch_seeedash import fetch
 from process_log import new_session,run_logged
+from app_idf_env import PROBE as APP_IDF_PROBE
 
 
 def build_bundle(args):
@@ -55,6 +56,10 @@ def build_bundle(args):
                 require(normalized.get(name.lower().replace('_','-'))==version,'Runtime Python package drift: '+name)
     else:
         require(False,'PlatformIO runtime Python environment is missing')
+    app_python=ROOT/'.cache/platformio/penv'/('.espidf-'+LOCK['platformio']['app_idf'])/'bin/python'
+    require(app_python.is_file(),'Application ESP-IDF Python environment is missing')
+    app_versions=json.loads(subprocess.check_output([app_python,'-I','-c',APP_IDF_PROBE,
+        app_python.parent.parent,ROOT/'docker/requirements-app-idf.lock'],text=True))['packages']
     report={'builder_version' :'1.1.0','combination':entry['id'],'channel':entry['channel'],
             'crosspoint':entry['crosspoint'],'seeedash':entry['seeedash'],'bootloader':entry['bootloader']['version'],
             'partition_layout':entry['partitions']['id'],'build_profile':entry['build_profile']['environment'],
@@ -63,6 +68,8 @@ def build_bundle(args):
             'builder_lock_sha256':sha((ROOT/'manifests/builder.lock.json').read_bytes()),
             'python':platform.python_version(),'python_packages':versions,'platformio_packages':packages,
             'platformio_runtime_python_packages':runtime_versions,
+            'application_idf_python_packages':app_versions,
+            'application_idf_python_lock_sha256':sha((ROOT/'docker/requirements-app-idf.lock').read_bytes()),
             'source_date_epoch':LOCK['source_date_epoch'],'hardware_tested_this_build':False,
             'target_build_and_host_tests':'PASS','same_environment_reproducibility':'PASS' if len(labels)==2 else 'NOT_RUN',
             'context':'container' if os.environ.get('STICKY_CONTAINER')=='1' else 'host',

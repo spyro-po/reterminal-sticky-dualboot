@@ -1,9 +1,9 @@
 {
   "version": "1.1.0",
-  "phase": "host-validation-complete; owner confirms tools-image build and diagnostics; container firmware build retest pending",
+  "phase": "host-validation-complete; owner tools-image/first-clean pass; application-IDF bootstrap fix awaits Ubuntu container retest",
   "baseline": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
   "runtime_sources": "UNCHANGED: firmware, crosspoint integration, patches, partitions and v1.0.0 dependency lock",
-  "python_offline_tests": "PASS:60 unittest cases plus8 forbidden PlatformIO targets",
+  "python_offline_tests": "PASS:69 unittest cases plus8 forbidden PlatformIO targets",
   "locked_python_environments": "PASS: clean installs and pip check; all exact package pins verified",
   "docker_configuration": "PASS: digest/COPY/context policy audit; shell syntax and fake-Docker isolation tests",
   "docker_build_local": "UNAVAILABLE: no Docker daemon/socket; unprivileged user namespaces are denied",
@@ -82,5 +82,32 @@
     "docker_execution_local": "NOT_RUN: Docker daemon/socket unavailable; owner Ubuntu retest required.",
     "firmware_compilation": "NOT_RUN for this initialization-only fix; previous reproducibility results remain baseline evidence.",
     "new_hardware_tests": false
+  },
+  "application_idf_python_initialization": {
+    "baseline": "4e15b17",
+    "root_cause": "Application-IDF uv installer inherits outer PlatformIO cryptography50.0.2 constraint conflicting with pioarduino cryptography~=44.0.0; upstream ignores install-action failure and writes environment marker, then CMake cannot import idf_component_manager.",
+    "negative_control": "PASS: original uv invocation with inherited outer lock returns1 with an explicit cryptography constraint conflict.",
+    "locked_scope": "59 exact hashed packages from pinned SDK core requirements plus pinned pioarduino Python requirements; distinct from IDF5.4 and outer PlatformIO locks.",
+    "application_versions": {
+      "idf-component-manager": "2.4.11",
+      "esp-idf-kconfig": "3.7.0",
+      "cryptography": "44.0.3",
+      "pyparsing": "3.2.5"
+    },
+    "cold_and_warm_cache": "PASS: actual application-interpreter imports, exact package inventory and uv dependency checks; upstream-compatible marker only after verification.",
+    "incomplete_cache": "PASS: remove component manager as a negative control; probe rejects incomplete inventory; bootstrap restores package and all checks pass.",
+    "interpreter_isolation": "PASS: prefix checked before install; explicit uv --python; original bootloader and outer locks unchanged; existing IDF5.4 retains component manager2.5.2/Kconfig2.5.4.",
+    "regressions": "9 new offline tests plus cold/warm orchestration extension, including real wrong/empty interpreter probes, hashes, failed installs/imports and symlink/skip-marker rejection.",
+    "git_diagnostic": "PASS: pinned SDK CMake submodule probe on archive without Git metadata emits fatal:not-a-git-repository while CMake returns0; exact source of owner excerpt is not proven.",
+    "native_crosspoint_build": "PASS: full native framework and CrossPoint compilation returned0; final ELF/map/NVS/write-guard, image and exact partition-table audits passed; application interpreter inventory/imports rechecked after build.",
+    "docker_execution_local": "NOT_RUN: no daemon/socket; owner Ubuntu retest required.",
+    "new_hardware_tests": false,
+    "firmware_sources_and_versions": "UNCHANGED; custom Stage4 bootloader not rebuilt; no merged firmware image or published firmware artifacts.",
+    "missing_packages_negative_control": [
+      "cryptography",
+      "pyparsing",
+      "idf_component_manager",
+      "esp_idf_kconfig"
+    ]
   }
 }

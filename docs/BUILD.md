@@ -51,6 +51,12 @@ CrossPoint pre-scripts before its normal dependency-installation stage. No
 CrossPoint script is bypassed. See [DOCKER_INSTALL.md](DOCKER_INSTALL.md#first-clean-on-an-empty-platformio-cache)
 for the cold-cache failure and retained initialization logs.
 
+It also prepares `penv/.espidf-5.5.5` with the separate hashed application Python
+lock before CrossPoint compilation. This environment must not reuse IDF5.4's
+Python packages or the outer PlatformIO dependency constraints. Interpreter,
+dependency and import probes run before upstream cache metadata is recorded.
+See [application dependencies](DOCKER_INSTALL.md#application-esp-idf-python-dependencies).
+
 Host checks after preparing dependencies:
 
 ```sh

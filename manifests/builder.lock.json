@@ -13,7 +13,8 @@
     "docker/requirements-pio.lock": "7d7628b109b8ac2143c3fb2d782ea2c07277d7079fadc728f5a8154088509037",
     "docker/requirements-idf.lock": "a111ec243ec37f5f05c6390c5e32873bdc0699c3cb8001b989e71b81534318fd",
     "docker/espidf.constraints.v5.4.txt": "682e0a340fbacf56b5364c544f74dbf1888676f5088b09dc27f66c785fe952ad",
-    "docker/apt.sources": "c7fa78a5b88a32eaaaa5557683b8ca62e3ba4f024bb88335ecff24d10c486c38"
+    "docker/apt.sources": "c7fa78a5b88a32eaaaa5557683b8ca62e3ba4f024bb88335ecff24d10c486c38",
+    "docker/requirements-app-idf.lock": "be5db64cb38043c4e2f27287fbd66a9546d771b45fc77f2c7b7a14c4c75bd683"
   },
   "distribution": "Dockerfile is for local image construction; no prebuilt image or firmware is published",
   "reproducibility_scope": "Pinned sources/base/OS snapshot/Python versions; generated binaries require a same-environment rebuild comparison; cross-host identity is not assumed",
@@ -30,5 +31,19 @@
     "debian-security": [
       "bookworm-security"
     ]
+  },
+  "app_idf_environment": {
+    "idf_version": "5.5.5",
+    "pio_environment_version": "1.0.0",
+    "upstream_builder_sha256": "3b806c21bd7f0682396c9bda7483cd1f257120a2683ce33e2076b0b3705abc2c",
+    "core_requirements_sha256": "97bd83e73486e667c635f5c36af72793de8b1f42ddcba0d4571be20174698c7d",
+    "dependencies": {
+      "cryptography": "~=44.0.0",
+      "pyparsing": ">=3.1.0,<4",
+      "idf-component-manager": "~=2.4.11",
+      "esp-idf-kconfig": "~=3.7.0"
+    },
+    "lock": "docker/requirements-app-idf.lock",
+    "lock_scope": "Full SDK core requirements plus pinned pioarduino Python requirements; standalone v5.5 Kconfig constraints differ from pioarduino."
   }
 }

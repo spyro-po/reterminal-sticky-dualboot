@@ -95,17 +95,20 @@ class PioDependenciesTests(unittest.TestCase):
         for warm in [False,True]:
             with self.subTest(warm=warm):
                 if warm:self.install()
-                module=self.builder();calls=[]
+                module=self.builder();calls=[];app_ready=[]
                 def runner(command,cwd,log,env):
                     calls.append(log)
                     if 'pkg' in command:self.install()
                     else:
+                        self.assertTrue(app_ready,'Application Python must be initialized before clean/build')
                         validate_frameworks(self.core)
                         if 'clean' not in command:raise StopBeforeCompile()
                 with mock.patch.object(module,'environment',return_value=self.env), \
                      mock.patch.object(module,'prepare',return_value=self.checkout), \
                      mock.patch.object(module,'pio_command',return_value=self.command), \
-                     mock.patch.object(module,'prepare_platform'),mock.patch.object(module,'run',side_effect=runner):
+                     mock.patch.object(module,'prepare_platform'), \
+                     mock.patch.object(module,'initialize_app_idf',side_effect=lambda *args:app_ready.append(True)), \
+                     mock.patch.object(module,'run',side_effect=runner):
                     with self.assertRaises(StopBeforeCompile):module.build(mock.Mock(label='first',clean_app=True))
                 self.assertEqual(calls,['first-dependencies.log','first-clean.log','first-crosspoint.log'])
 
@@ -114,7 +117,9 @@ class PioDependenciesTests(unittest.TestCase):
         with mock.patch.object(module,'environment',return_value=self.env), \
              mock.patch.object(module,'prepare',return_value=self.checkout), \
              mock.patch.object(module,'pio_command',return_value=self.command), \
-             mock.patch.object(module,'prepare_platform'),mock.patch.object(module,'run',runner):
+             mock.patch.object(module,'prepare_platform'),mock.patch.object(module,'initialize_app_idf') as app, \
+             mock.patch.object(module,'run',runner):
             with self.assertRaisesRegex(ValueError,'metadata missing'):module.build(mock.Mock(label='first',clean_app=True))
         self.assertEqual(runner.call_count,1)
+        app.assert_not_called()
         self.assertIn('pkg',runner.call_args.args[0])

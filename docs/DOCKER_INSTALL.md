@@ -59,6 +59,57 @@ Real tool installation and Python dependency checks passed in isolated host dire
 
 ## Build failure diagnostics
 
+### Application ESP-IDF Python dependencies
+
+There are three Python environments with different dependency requirements:
+
+| Environment | Purpose | Lock |
+| --- | --- | --- |
+| PlatformIO `penv` | pioarduino tools/helper runtime | `docker/requirements-pio.lock` |
+| `penv/.espidf-5.5.5` | CrossPoint Arduino/IDF component build | `docker/requirements-app-idf.lock` |
+| `/opt/esp/idf-python` | Stage4 bootloader, ESP-IDF5.4 | `docker/requirements-idf.lock` and IDF5.4 constraints |
+
+Pioarduino creates the nested application environment during the Arduino core
+rebuild. Its pinned builder requests `cryptography~=44.0.0`,
+`pyparsing>=3.1.0,<4`, `idf-component-manager~=2.4.11`, and
+`esp-idf-kconfig~=3.7.0`. Previously that install inherited the outer PlatformIO
+constraint `cryptography==50.0.2`, making resolution impossible. The upstream
+builder ignores the dependency-install action's status and still writes its
+environment metadata. CMake subsequently reports the missing component manager.
+Installing a package into the outer runtime or bootloader Python cannot fix that
+application interpreter.
+
+Before clean/build, the builder now initializes the exact nested environment
+explicitly. Its separate lock contains all59 packages resolved from the pinned
+SDK's core requirements plus pioarduino's four requirements: component manager
+2.4.11, Kconfig3.7.0, cryptography44.0.3 and pyparsing3.2.5. Every package has an
+exact version and artifact SHA-256 hashes. No versions are resolved during the
+installer run. The pioarduino Kconfig requirement differs from the standalone
+Espressif5.5 constraints; this lock targets the pinned pioarduino integration,
+not a replacement for the bootloader's5.4 dependency set.
+
+The bootstrap verifies the upstream builder/core-requirements hashes, checks
+the selected interpreter's prefix before installing anything, then uses explicit
+`uv pip sync --python ... --require-hashes`, dependency checks and isolated imports
+through `.espidf-5.5.5/bin/python`. Outer constraints are replaced only for those
+application-bootstrap subprocesses. The outer PlatformIO environment and
+bootloader environment are unchanged. Existing/partial application caches are
+synced and checked again. Upstream cache metadata is written only after success,
+and pioarduino's own dependency checks still execute; no skip marker or script
+patch is used. A changed upstream bootstrap contract stops the build for review.
+
+Logs named `installer-first-app-idf-*.log` and their status files record creation,
+interpreter identity, installation, dependency checks and import/version probes.
+The component versions and application lock hash also appear in `build-report.json`.
+
+The additional `fatal: not a git repository` line can come from IDF's Git probes
+against SDK release archives without `.git` metadata. A host reproduction of
+the pinned SDK's CMake submodule check emitted that text but returned0. This
+does not make every Git failure harmless: pinned CrossPoint/FreeInk checkout
+checks remain fatal. In the reported log the decisive failure is the Python
+import error at `build.cmake:633`; the exact source of its separate Git line
+cannot be identified from that excerpt alone.
+
 ### First clean on an empty PlatformIO cache
 
 The pinned PlatformIO core runs a clean target through SCons and its `pre:`
@@ -127,10 +178,10 @@ The earlier error referenced `.local/logs/installer-first-clean.log` inside the
 disposable container workspace. The launcher does not mount the host repository
 there. A same-named file in the host repository therefore cannot establish the
 result of that container run. Textual PlatformIO `SUCCESS` is not an exit status:
-a process can fail later or be terminated. The original runtime failure remains
-unidentified until a correlated log and status are collected; no error is ignored
-by this change. A native host clean returned0 in the preparation environment,
-which does not reproduce or validate the Docker run.
+a process can fail later or be terminated. That discarded run remains untraceable;
+the subsequently captured framework and application-Python failures are diagnosed
+above. No error is ignored. The earlier populated-cache host clean returned0;
+it did not test the cold-cache case or validate a Docker run.
 
 Pull this update and retry on Ubuntu:
 

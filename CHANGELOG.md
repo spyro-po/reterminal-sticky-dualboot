@@ -2,6 +2,8 @@
 
 ## v1.1.0 — Unreleased
 
+- Bootstrap and verify the application ESP-IDF5.5.5 Python environment with a separate fully pinned, hashed package lock; keep PlatformIO and bootloader IDF5.4 environments separate and reject missing imports before compilation.
+
 - Initialize the pinned PlatformIO environment before the first clean; check framework source metadata and ESP32-S3 SDK files on cold and warm caches without bypassing CrossPoint pre-scripts.
 
 - Preserve build diagnostics in unique output-volume directories after container removal; record actual exit codes/signals and show final stdout/stderr on failure. Never reuse an earlier host log or infer success from text.
