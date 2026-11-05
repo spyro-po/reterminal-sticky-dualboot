@@ -1,9 +1,9 @@
 {
   "version": "1.1.0",
-  "phase": "final-audit-pass; owner Ubuntu Docker build/reproducibility/verification PASS; source-only release proposed, awaiting approval",
+  "phase": "owner-reported exact-build hardware validation PASS9/9; source-only v1.1.0 ready for merge review, awaiting owner approval",
   "baseline": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
   "runtime_sources": "UNCHANGED: firmware, crosspoint integration, patches, partitions and v1.0.0 dependency lock",
-  "python_offline_tests": "PASS:69 unittest cases plus8 forbidden PlatformIO targets",
+  "python_offline_tests": "PASS:72 unittest cases plus8 forbidden PlatformIO targets",
   "locked_python_environments": "PASS: clean installs and pip check; all exact package pins verified",
   "docker_configuration": "PASS: digest/COPY/context policy audit; shell syntax and fake-Docker isolation tests",
   "docker_build_local": "UNAVAILABLE: no Docker daemon/socket; unprivileged user namespaces are denied",
@@ -13,8 +13,6 @@
   "actual_existing_bundle_export": "PASS: v1.0.0 local software-test pair and factory-derived image; all factory extents unchanged",
   "preserve_data_simulation": "PASS: synthetic canaries and factory-derived image, not a new device backup/read",
   "windows_execution": "NOT_RUN; PowerShell commands documented with exit-code guards",
-  "new_hardware_tests": false,
-  "device_flash_operations": false,
   "other_containers_modified": false,
   "firmware_redistribution": "FORBIDDEN under current policy; no BIN, vendor or complete Flash artifacts in source/CI uploads",
   "independent_reviews": "PASS: four initial read-only axes; Linux Docker instruction-path P2 fixed and targeted documentation follow-up passed",
@@ -143,16 +141,15 @@
     "public_files": "PASS: current Git source and history contain no firmware/private artifacts; existing v1.0.0 Release assets are source archive, SHA256SUMS.txt and RELEASE_NOTES.md.",
     "warnings": [
       "Windows installation not executed",
-      "New firmware not hardware tested",
       "Paired writes not power-fail atomic",
       "All OTA/resource updates forbidden",
-      "Battery Up+Reset and broad sleep/wake unconfirmed",
       "No cross-host reproducibility promise",
-      "Binary redistribution not cleared"
+      "Binary redistribution not cleared",
+      "Future rebuilds and other devices not hardware validated",
+      "Battery emergency Up+Reset power condition not specified; long-term sleep/wake stress not reported",
+      "Fresh Install/factory Recovery hardware execution not reported"
     ],
     "docker_reexecuted_by_reviewer": false,
-    "new_hardware_tests": false,
-    "device_operations": false,
     "details": "docs/V1.1_FINAL_AUDIT.md",
     "persisted_successful_run_evidence": [
       {
@@ -165,6 +162,28 @@
         "recorded_processes": 24,
         "all_returncodes_zero": true
       }
-    ]
-  }
+    ],
+    "owner_reported_hardware_validation": {
+      "status": "PASS",
+      "report": "manifests/v1.1-hardware-validation.json",
+      "fresh_image_sha256": "e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073",
+      "hardware_tests_passed": 9,
+      "hardware_tests_total": 9,
+      "scope": "One physical device, exact artifact and reported conditions only; future outputs remain untested by default."
+    },
+    "reviewer_hardware_tests_performed": false,
+    "reviewer_device_operations": false
+  },
+  "owner_reported_hardware_validation": {
+    "status": "PASS",
+    "report": "manifests/v1.1-hardware-validation.json",
+    "fresh_image_sha256": "e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073",
+    "hardware_tests_passed": 9,
+    "hardware_tests_total": 9,
+    "scope": "One physical device, exact artifact and reported conditions only; future outputs remain untested by default."
+  },
+  "reviewer_hardware_tests_performed": false,
+  "hardware_evidence_scope": "Historical new_hardware_tests=false fields describe reviewer/stage activity. Latest owner hardware results are in owner_reported_hardware_validation and its separate exact-build report.",
+  "reviewer_new_hardware_tests": false,
+  "reviewer_device_flash_operations": false
 }

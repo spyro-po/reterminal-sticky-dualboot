@@ -4,7 +4,7 @@
 
 CrossPoint starts by default. Its **Settings → System → Switch to Seeedash** menu starts the original Seeedash application. A physical Reset without Up returns to CrossPoint.
 
-The published **v1.0.0** packages the Stage 4 integration. The proposed **v1.1.0** adds a local Docker builder/installer CLI without changing that runtime. Its full Ubuntu Docker build, reproducibility check and artifact verification have passed according to the owner; the resulting local bundles also passed the [final audit](docs/V1.1_FINAL_AUDIT.md). The project owner reports that the Stage 4 update, both applications, USB switching, menu switching on battery and physical Reset return work on their device. This is a report from one device, not validation of every hardware revision. A build from this repository is a new artifact until tested on hardware; see [validation](docs/VALIDATION.md).
+The published **v1.0.0** packages the Stage 4 integration. The proposed **v1.1.0** adds a local Docker builder/installer CLI without changing that runtime. The owner reports a full Ubuntu build and Preserve Data installation, including flash/protected-data verification and **9/9 hardware tests PASS** on one real Sticky for image `e4dcb8…f073`; see the [exact-build hardware report](docs/VALIDATION.md). The local bundles also passed the [final audit](docs/V1.1_FINAL_AUDIT.md). The project owner reports that the Stage 4 update, both applications, USB switching, menu switching on battery and physical Reset return work on their device. This is a report from one device, not validation of every hardware revision. This validates the recorded artifact and reported conditions only. Future rebuilds and other devices remain untested by default; see [validation](docs/VALIDATION.md).
 
 > **All standard OTA updates are unsupported and forbidden.** Do not use CrossPoint OTA, Seeedash firmware/resource updates, or child-device updates. They can overwrite the other application or its data. Keep Seeedash offline and unpaired for this release.
 
@@ -26,9 +26,9 @@ Seeedash binary redistribution permission has not been established. CrossPoint's
 | Normal cold start / physical Reset without Up | CrossPoint |
 | CrossPoint menu → Switch to Seeedash | Validated private journal request, software restart, Seeedash; reported working on battery |
 | Up + physical Reset | Emergency Seeedash selection; reported working with USB |
-| Deep-sleep wake | Resume selected system by journal; physical Up selection ignored |
+| Deep-sleep wake | Resume selected system by journal; physical Up selection ignored by policy; basic sleep/wake in both systems owner-reported PASS for the exact v1.1.0 build |
 
-For emergency selection, hold Up through Reset for at least 600 ms, then release it within the next 2 seconds and leave it released for 30 ms. A permanently held button is rejected. Battery Up+Reset is **not confirmed**. This gesture does not enter the ESP32 ROM download mode.
+For emergency selection, hold Up through Reset for at least 600 ms, then release it within the next 2 seconds and leave it released for 30 ms. A permanently held button is rejected. Emergency Up+Reset passed, but its battery-only power condition was not specified; battery Up+Reset is **not confirmed**. This gesture does not enter the ESP32 ROM download mode.
 
 ## Device photos
 

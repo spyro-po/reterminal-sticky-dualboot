@@ -27,8 +27,10 @@ layout, book storage and OTA restrictions are unchanged.
 Only `cp-2.0.0-seeedash-1.2.0` is supported: pinned CrossPoint2.0.0,
 Seeedash1.2.0 and the Stage 4 bootloader/protected 32 MiB layout.
 
-The owner reports a successful full Ubuntu Docker build, reproducibility check
-and artifact verification. The supplied local bundles also passed independent
+The owner reports successful full Ubuntu Docker build, reproducibility check,
+artifact verification, Preserve Data preflight, flash verification, full Flash
+readback/protected-data verification and **9/9 physical hardware tests PASS**
+on one Seeed reTerminal Sticky (ESP32-S3, 32 MiB). The supplied local bundles also passed independent
 checks of integrity, layout bounds, factory extents and simulated Preserve Data
 writes. Their fresh-image SHA-256 is:
 
@@ -36,8 +38,11 @@ writes. Their fresh-image SHA-256 is:
 e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073
 ```
 
-This identifies the audited local output, not a public download or a universal
-cross-host build hash. Verify your own bundle using its checksums and the CLI.
+This identifies the audited, owner-tested build bundle, not a public download,
+a device Flash/backup digest after Preserve Data, or a universal cross-host hash. The nine tests cover normal CrossPoint boot,
+EPUB opening, menu switching, responsive Seeedash, Reset return, emergency
+Up+Reset, switching without USB, preserved books/settings and sleep/wake in both
+systems. See [the exact-build hardware report](manifests/v1.1-hardware-validation.json). Verify your own bundle using its checksums and the CLI.
 See [the final audit](docs/V1.1_FINAL_AUDIT.md) for segment identities and evidence
 limits. Offline tests and the existing PR's tools-image smoke CI passed.
 
@@ -60,11 +65,12 @@ v1.0.0 devices need no reflashing merely to use the new builder.
 - All standard OTA and Seeedash resource/child updates remain forbidden. The
   unmodified factory application cannot be sandboxed by this bootloader.
 - Paired updates are not power-fail atomic. See [Recovery](docs/RECOVERY.md).
-- Windows installation has been reviewed but not executed. New Docker-built
-  firmware has not been tested on hardware; historical Stage 4 results do not
-  validate these new binaries.
-- Battery Up+Reset and broad sleep/wake behavior remain unconfirmed. Menu
-  switching on battery belongs to the owner's historical Stage 4 observations.
+- Windows installation has been reviewed but not executed. Hardware results are
+  owner-reported and apply only to the recorded image, one device and reported
+  conditions. Future rebuilds/devices remain untested by default.
+- Battery menu switching and basic sleep/wake in both systems passed. Emergency
+  Up+Reset power source, long-term sleep/wake stress and held-button wake tests
+  were not specified. Fresh Install/factory Recovery hardware tests were not reported.
 - Same-environment repeat builds passed; cross-host bit identity is not promised.
 
 Publication and merge still require the owner's approval.

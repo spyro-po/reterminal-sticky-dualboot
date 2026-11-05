@@ -64,3 +64,12 @@ Host checks after preparing dependencies:
 ```
 
 These tests use mocks for hardware and selected real-source function extraction. They cannot measure battery rails, wake timing, e-paper state, or the complete SDK call-chain stack high-water.
+
+
+## Recorded hardware validation
+
+The owner reports 9/9 physical tests and Preserve Data/flash/protected-readback
+verification PASS for [one exact Docker-generated v1.1.0 image](VALIDATION.md).
+The report does not automatically validate a native or future Docker rebuild.
+Build-time hardware flags stay false; later hash-specific owner evidence is
+recorded separately. The previous source-only distribution and OTA policy remain.

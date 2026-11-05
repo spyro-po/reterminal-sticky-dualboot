@@ -5,8 +5,10 @@ This development version wraps the existing Stage 4 build and verification pipel
 Final validation: the owner reports full Ubuntu Docker build, repeat-build
 comparison and artifact verification PASS. Both supplied local bundles passed
 the [final audit](V1.1_FINAL_AUDIT.md). The troubleshooting sections below record
-earlier failures and their fixes. Windows execution and new firmware hardware
-tests remain unverified; no local reviewer Docker execution is claimed.
+earlier failures and their fixes. The owner also reports Preserve Data/flash/
+protected-readback verification and 9/9 hardware tests for the [exact image](VALIDATION.md).
+Windows and future rebuilds/devices remain unverified; no reviewer Docker or
+hardware execution is claimed.
 
 ## Requirements
 
@@ -359,4 +361,4 @@ The image pins Python by image digest, ESP-IDF by commit, the compiler archive b
 
 **Local outputs contain Seeedash and must not be publicly uploaded.** Do not publish a running container snapshot with `docker commit/export`, any output bundle, or an image into which runtime output was copied. SDK test fixtures/tool binaries are distinct from the forbidden Seeedash/CrossPoint application and complete Flash artifacts. No prebuilt Docker image is published by this project. [LICENSING.md](LICENSING.md) remains authoritative.
 
-All standard OTA paths remain unsupported and forbidden. New Docker outputs have no new hardware validation. Physical power/reset/wake risks and the non-atomic paired update remain unchanged.
+All standard OTA paths remain unsupported and forbidden. The owner-tested exact image has 9/9 hardware results recorded in [VALIDATION.md](VALIDATION.md); future Docker outputs do not inherit them automatically. Unreported power/reset/wake conditions and non-atomic paired-update risks remain.

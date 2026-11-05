@@ -41,3 +41,9 @@ Reset and provision Seeedash again. This is a merged ESP32-S3 factory image at *
 ## Emergency system selection is not recovery
 
 With a valid Dual Boot loader/table, qualified Up+Reset selects Seeedash (USB confirmed), and Reset without Up selects CrossPoint. It does not restore the factory partition table or recover corrupted firmware. Battery menu selection is reported working; battery Up+Reset is still not established.
+
+
+The [owner-reported v1.1.0 validation](VALIDATION.md) covers successful Preserve
+Data installation and protected readback for the exact image. It does not report
+execution of factory Recovery or an interrupted-write recovery. Keep these
+procedures and verified backups ready even after a successful hardware test.

@@ -2,6 +2,11 @@
 
 Docker builders must use the explicit backup/layout gate in [DOCKER_INSTALL.md](DOCKER_INSTALL.md). Windows commands and readback comparison are in [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md).
 
+The owner reports successful Preserve Data installation, flash/protected-data
+verification and 9/9 hardware tests for the [exact v1.1.0 image](VALIDATION.md).
+This does not validate future rebuilds or other devices; repeat the safety
+checks below for each installation.
+
 Only for a device already using the exact **protected-reference** table. This is not a factory-device migration. The current table must contain `app1` subtype **test (0x20)** at `0x690000`, private `cp_nvs` and `bootstate`, and all vendor data extents unchanged. A valid MD5 alone does not prove layout compatibility.
 
 Build a new matched pair using [BUILD.md](BUILD.md). There is no public precompiled CrossPoint asset in this source release. Retain your last verified working **pair** for rollback. Do not install the bootloader alone.

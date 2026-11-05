@@ -147,4 +147,4 @@ Invoke-StickyEsp --after no_reset verify_flash 0x0 C:\Sticky\seeedash-1.2.0.bin
 
 Stop on any command/hash failure. Reset after verification and provision Seeedash again. Full erase clears the last 256 KiB absent from the vendor file. Up is not the ROM BOOT strap; see [RECOVERY.md](RECOVERY.md) if auto-download fails. Do not guess board pads.
 
-Windows installation has not been executed. The owner reports successful Ubuntu Docker build/reproducibility/verification; see the [final audit](V1.1_FINAL_AUDIT.md). No new hardware installation is claimed. Keep all standard OTA forbidden. Up+Reset on battery and broad sleep/wake behavior remain unconfirmed.
+Windows installation has not been executed. The owner reports successful Ubuntu Docker build/reproducibility/verification; see the [final audit](V1.1_FINAL_AUDIT.md). The exact image now has owner-reported Preserve Data/flash/readback and 9/9 hardware results; this does not establish Windows execution. Keep all OTA forbidden. Battery power for emergency Up+Reset and sleep/wake stress remain unconfirmed; basic sleep/wake passed.

@@ -4,7 +4,7 @@
 
 | ID | Channel | CrossPoint | Seeedash | Loader / layout | Hardware evidence |
 | --- | --- | --- | --- | --- | --- |
-| cp-2.0.0-seeedash-1.2.0 | stable | 2.0.0, e8299b5f126817282939059d6505f90429489276 | 1.2.0 | Stage 4, STKY-BOOT-V1 / protected-reference-32m | Owner-reported Stage 4 tests on one device; newly generated and Docker-built firmware is not hardware-tested |
+| cp-2.0.0-seeedash-1.2.0 | stable | 2.0.0, e8299b5f126817282939059d6505f90429489276 | 1.2.0 | Stage 4, STKY-BOOT-V1 / protected-reference-32m | Owner-reported v1.1.0 exact image `e4dcb8…f073`:9/9 PASS on one device; other outputs untested by default |
 
 Seeedash's approved full-image SHA-256 is `5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2`. The CSV/table, eight-file patch, boot policy/entry/header/config and build profile have integrity pins. Six factory-extent hashes allow fresh-image verification without publishing or bundling a separate factory BIN. All original factory data extents must match.
 
@@ -17,3 +17,17 @@ Exactly one stable default is allowed. Unknown IDs fail. An entry marked `experi
 Upstream release discovery only records experimental, **NOT_VALIDATED** candidates. Even a tag with the same version label does not prove that its commit is the approved patched develop revision. A maintainer must inspect the exact source and license changes, patch applicability, NVS/FS/OTA paths, layout/image bounds, loader integration and build reproducibility; then obtain new physical tests. CrossPoint and Seeedash updater behavior must be re-audited.
 
 Only after explicit approval should the manifest, locks, source pins, documentation and hardware-evidence record be changed together. Preserve old evidence as historical evidence. Never change `new_build_tested` to true merely because a build, CI job or menu mock passed. SHA-256 is an integrity check, not publisher authentication or a hardware sandbox.
+
+
+## Exact-build hardware evidence
+
+[The v1.1.0 report](../manifests/v1.1-hardware-validation.json) records the owner's
+9/9 hardware results and Preserve Data/flash/protected-readback verification for
+fresh image `e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073`.
+It is linked by the existing historical hardware report. The compatibility
+manifest's default `new_build_tested`/`docker_build_tested` flags and existing
+build-report flags remain false for future outputs. They are not retrospective
+claims that the recorded artifact was never tested. Keeping the build-input
+manifest unchanged also preserves verification of already generated bundles.
+Version labels alone never transfer hardware validation to another artifact or
+device. See [validation scope](VALIDATION.md).

@@ -1,5 +1,5 @@
 {
-  "evidence": "User-reported physical tests in project conversation; no new hardware tests performed during release preparation",
+  "evidence": "Historical owner-reported Stage 4 tests from the project conversation; retained separately from later v1.1.0 exact-build validation.",
   "device": "Seeed reTerminal Sticky / ESP32-S3 / 32 MiB flash",
   "artifact_association": "Stage 4 update package supplied in this project; no new independent device readback in release preparation",
   "confirmed": [
@@ -16,5 +16,8 @@
     "Power-cut atomicity",
     "Runtime stack/heap high-water",
     "Other device revisions"
+  ],
+  "additional_reports": [
+    "manifests/v1.1-hardware-validation.json"
   ]
 }

@@ -2,6 +2,8 @@
 
 ## v1.1.0 — Unreleased
 
+- Record owner-reported Preserve Data/flash/protected-readback verification and 9/9 hardware tests for exact image e4dcb8…f073 on one Sticky; retain untested defaults for future rebuilds/devices and all OTA/distribution restrictions.
+
 - Complete final artifact/layout audit of the owner-tested Ubuntu Docker output; document source-only release readiness, retain Windows/hardware limits and harden manual installation/recovery commands against failed checks and backup overwrite.
 
 - Bootstrap and verify the application ESP-IDF5.5.5 Python environment with a separate fully pinned, hashed package lock; keep PlatformIO and bootloader IDF5.4 environments separate and reject missing imports before compilation.
