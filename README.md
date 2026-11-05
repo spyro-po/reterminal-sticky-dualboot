@@ -4,7 +4,7 @@
 
 CrossPoint starts by default. Its **Settings → System → Switch to Seeedash** menu starts the original Seeedash application. A physical Reset without Up returns to CrossPoint.
 
-The published **v1.0.0** packages the Stage 4 integration. The proposed **v1.1.0** adds a local Docker builder/installer CLI without changing that runtime. The owner reports a full Ubuntu build and Preserve Data installation, including flash/protected-data verification and **9/9 hardware tests PASS** on one real Sticky for image `e4dcb8…f073`; see the [exact-build hardware report](docs/VALIDATION.md). The local bundles also passed the [final audit](docs/V1.1_FINAL_AUDIT.md). The project owner reports that the Stage 4 update, both applications, USB switching, menu switching on battery and physical Reset return work on their device. This is a report from one device, not validation of every hardware revision. This validates the recorded artifact and reported conditions only. Future rebuilds and other devices remain untested by default; see [validation](docs/VALIDATION.md).
+**v1.1.0** adds a local Docker builder/installer CLI without changing that runtime. The owner reports a full Ubuntu build and Preserve Data installation, including flash/protected-data verification and **9/9 hardware tests PASS** on one real Sticky for image `e4dcb8…f073`; see the [exact-build hardware report](docs/VALIDATION.md). The local bundles also passed the [final audit](docs/V1.1_FINAL_AUDIT.md). The project owner reports that the Stage 4 update, both applications, USB switching, menu switching on battery and physical Reset return work on their device. This is a report from one device, not validation of every hardware revision. This validates the recorded artifact and reported conditions only. Future rebuilds and other devices remain untested by default; see [validation](docs/VALIDATION.md).
 
 > **All standard OTA updates are unsupported and forbidden.** Do not use CrossPoint OTA, Seeedash firmware/resource updates, or child-device updates. They can overwrite the other application or its data. Keep Seeedash offline and unpaired for this release.
 
@@ -12,7 +12,7 @@ The published **v1.0.0** packages the Stage 4 integration. The proposed **v1.1.0
 
 This is a **source release**. It includes the custom bootloader, a pinned CrossPoint patch, the partition layout, build/verification scripts, notices and documentation. It contains **no factory Seeedash binary, complete Flash image, device dump, credentials or user data**.
 
-Seeedash binary redistribution permission has not been established. CrossPoint's MIT license also does not cover every library in its compiled firmware; GPL/LGPL corresponding-source and relinking obligations have not been closed for a public binary package. Compiled firmware assets are therefore withheld in v1.0.0 and the proposed v1.1.0. The local build creates a matched update pair and, optionally, a complete 32 MiB fresh-install image. See [licensing and provenance](docs/LICENSING.md).
+Seeedash binary redistribution permission has not been established. CrossPoint's MIT license also does not cover every library in its compiled firmware; GPL/LGPL corresponding-source and relinking obligations have not been closed for a public binary package. Compiled firmware assets are therefore withheld in v1.0.0 and v1.1.0. The local build creates a matched update pair and, optionally, a complete 32 MiB fresh-install image. See [licensing and provenance](docs/LICENSING.md).
 
 ## Hardware and controls
 
@@ -57,11 +57,14 @@ flowchart TD
 
 The factory application and storage extents stay at their original addresses. CrossPoint has its own NVS. `app1` is a **test** application, not a second native OTA slot. The loader uses a separate two-sector `bootstate` journal. [Architecture and full partition map](docs/ARCHITECTURE.md).
 
-## Docker builder (v1.1.0 release candidate)
+## Docker builder (v1.1.0)
 
 No manual host ESP-IDF or PlatformIO installation is needed with Docker Engine on Linux or Docker Desktop + WSL2 on Windows11:
 
 ```sh
+git clone https://github.com/spyro-po/reterminal-sticky-dualboot.git
+cd reterminal-sticky-dualboot
+git switch --detach v1.1.0
 ./sticky-installer.sh list
 ./sticky-installer.sh build
 ./sticky-installer.sh verify --mode fresh

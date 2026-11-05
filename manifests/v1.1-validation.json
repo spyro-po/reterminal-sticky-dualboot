@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "phase": "owner-reported exact-build hardware validation PASS9/9; source-only v1.1.0 ready for merge review, awaiting owner approval",
+  "phase": "owner-approved source-only v1.1.0 release; exact-build hardware validation PASS9/9",
   "baseline": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
   "runtime_sources": "UNCHANGED: firmware, crosspoint integration, patches, partitions and v1.0.0 dependency lock",
   "python_offline_tests": "PASS:72 unittest cases plus8 forbidden PlatformIO targets",
@@ -16,7 +16,7 @@
   "other_containers_modified": false,
   "firmware_redistribution": "FORBIDDEN under current policy; no BIN, vendor or complete Flash artifacts in source/CI uploads",
   "independent_reviews": "PASS: four initial read-only axes; Linux Docker instruction-path P2 fixed and targeted documentation follow-up passed",
-  "public_release": "NOT_AUTHORIZED; no v1.1.0 tag or release",
+  "public_release": "OWNER_APPROVED: source-only v1.1.0; publication identifiers are recorded by the GitHub merge, annotated tag and Release",
   "native_all_existing_gates": "PASS: final ELF/map/NVS/WiFi callback audit, IDF/table generators, C/C++ policy/menu/journal fault tests, flash isolation and SHA pins",
   "full_local_export_and_verify": "PASS: six-file bundle exported only after validation; fresh and Preserve Data verification passed using a factory-derived image, not a device backup",
   "original_working_inputs": "PASS: baseline source/Stage4pair/vendor hashes unchanged",
@@ -111,7 +111,7 @@
   "final_audit": {
     "date": "2026-11-05",
     "runtime_build_baseline": "77b9e658e3f8d9b6a504c58bf4d37d6fb1ef9e32",
-    "recommendation": "GO for source-only v1.1.0 builder release after owner approval; NO-GO for firmware BIN/prebuilt image distribution.",
+    "recommendation": "GO for owner-approved source-only v1.1.0; NO-GO for firmware BIN/prebuilt-image distribution.",
     "owner_ubuntu_test": {
       "docker_build": "PASS",
       "reproducibility_check": "PASS",

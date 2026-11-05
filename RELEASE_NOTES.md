@@ -1,6 +1,6 @@
 # v1.1.0 — Docker Firmware Builder & Installer
 
-**Proposed release notes. This version has not been merged, tagged or published.**
+**Source-only release. Generate firmware locally; no firmware or Docker image is distributed.**
 
 Build the approved reTerminal Sticky Dual Boot firmware locally using Docker
 Engine on Linux or Docker Desktop with WSL2. Host installation of ESP-IDF and
@@ -73,4 +73,3 @@ v1.0.0 devices need no reflashing merely to use the new builder.
   were not specified. Fresh Install/factory Recovery hardware tests were not reported.
 - Same-environment repeat builds passed; cross-host bit identity is not promised.
 
-Publication and merge still require the owner's approval.

@@ -1,6 +1,6 @@
 # Docker Firmware Builder & Installer (v1.1.0)
 
-This development version wraps the existing Stage 4 build and verification pipeline. It does **not** flash devices. The currently released version remains v1.0.0 until the owner approves a new release.
+v1.1.0 wraps the existing Stage 4 build and verification pipeline. It does **not** flash devices. Use the released source tag `v1.1.0`; no prebuilt firmware or Docker image is published.
 
 Final validation: the owner reports full Ubuntu Docker build, repeat-build
 comparison and artifact verification PASS. Both supplied local bundles passed
@@ -32,7 +32,8 @@ Those versions were checked against the digest-verified official base layers and
 For the reported Ubuntu Docker Engine failure, pull this branch update and run from the repository root:
 
 ```sh
-git pull --ff-only origin feature/docker-installer
+git fetch --tags origin
+git switch --detach v1.1.0
 ./sticky-installer.sh build --reproducibility-check
 ```
 
@@ -194,7 +195,8 @@ it did not test the cold-cache case or validate a Docker run.
 Pull this update and retry on Ubuntu:
 
 ```sh
-git pull --ff-only origin feature/docker-installer
+git fetch --tags origin
+git switch --detach v1.1.0
 ./sticky-installer.sh build --reproducibility-check
 ls -lt out/diagnostics
 ```

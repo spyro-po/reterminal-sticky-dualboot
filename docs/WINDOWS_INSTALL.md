@@ -19,8 +19,7 @@ Inside the Ubuntu terminal, install Git if missing, clone the repository and sel
 ```sh
 git clone https://github.com/spyro-po/reterminal-sticky-dualboot.git
 cd reterminal-sticky-dualboot
-# v1.1.0 is under development: use feature/docker-installer until an approved release exists.
-git switch feature/docker-installer
+git switch --detach v1.1.0
 docker version
 ./sticky-installer.sh list
 ./sticky-installer.sh build

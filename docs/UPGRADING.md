@@ -17,4 +17,4 @@ The installer never flashes, burns eFuses, reformats filesystems or alters stabl
 
 The offline tests exercise the existing integration's image/partition, installer, promotion and Docker-launcher gates. They do **not** compile or certify unknown candidate firmware. Candidate build and hardware results remain NOT_RUN. The tooling smoke command is `list`, offline inside the built image; it does not download Seeedash. Network failure is a failed check, not proof that no upstream update exists. Maintainers can open an Issue or PR manually after reviewing the report.
 
-This branch must not be merged or tagged/released as v1.1.0 without owner approval. Docker runtime validation and hardware testing are separate evidence, and missing checks must stay visible.
+The owner approved the source-only v1.1.0 release. Select its tag with `git switch --detach v1.1.0`. Docker runtime validation and hardware testing remain separate evidence, and future builds/devices do not inherit the exact-build hardware report automatically.

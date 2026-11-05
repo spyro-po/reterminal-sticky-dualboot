@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.1.0 — Unreleased
+## v1.1.0 — 2026-11-05
 
 - Record owner-reported Preserve Data/flash/protected-readback verification and 9/9 hardware tests for exact image e4dcb8…f073 on one Sticky; retain untested defaults for future rebuilds/devices and all OTA/distribution restrictions.
 
