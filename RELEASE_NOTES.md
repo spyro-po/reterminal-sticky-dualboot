@@ -72,4 +72,3 @@ v1.0.0 devices need no reflashing merely to use the new builder.
   Up+Reset power source, long-term sleep/wake stress and held-button wake tests
   were not specified. Fresh Install/factory Recovery hardware tests were not reported.
 - Same-environment repeat builds passed; cross-host bit identity is not promised.
-
