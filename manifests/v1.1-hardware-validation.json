@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "release": "1.1.0",
+  "status": "PASS",
+  "evidence_type": "owner-reported",
+  "recorded_date_utc": "2026-11-05",
+  "hardware_execution_date": null,
+  "evidence": "Owner-reported physical validation in the project conversation; no independent reviewer hardware execution or raw device data collected.",
+  "device": {
+    "model": "Seeed reTerminal Sticky",
+    "soc": "ESP32-S3",
+    "flash_bytes": 33554432,
+    "tested_device_count": 1,
+    "hardware_revision": "not supplied"
+  },
+  "combination": {
+    "id": "cp-2.0.0-seeedash-1.2.0",
+    "crosspoint_version": "2.0.0",
+    "crosspoint_commit": "e8299b5f126817282939059d6505f90429489276",
+    "crosspoint_patch_sha256": "1be2135ed321ede36dbe04d2980c13c346072c117ee02ecf80b5c86904848e2c",
+    "seeedash_version": "1.2.0",
+    "seeedash_official_sha256": "5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2",
+    "bootloader": "stage4",
+    "partition_layout": "protected-reference-32m",
+    "partition_table_sha256": "51fc24d4da9b5bafb4bef860874d891d6ad29044c1724e5f05882724d83be812"
+  },
+  "artifact": {
+    "fresh_image_sha256": "e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073",
+    "fresh_image_bytes": 33554432,
+    "segments": [
+      {
+        "file": "bootloader.bin",
+        "offset": "0x0",
+        "bytes": 24528,
+        "sha256": "9e4cd3138348984dab07a1eca15fd231e647d8d6ba9fd8e298d81708445a3776",
+        "body_sha256": "3701c32534c43f3ba35187e9c03c58b6373420f6c410d67650069047d856f76a"
+      },
+      {
+        "file": "crosspoint.bin",
+        "offset": "0x690000",
+        "bytes": 5315184,
+        "sha256": "88e35b121fa1df7ced7721a816b33443cfdebeb8bc4ee4e5e8b6f1940d0f88ef",
+        "body_sha256": "6b547ca57d44927ecefb720184d909dba1df4ff8cd9272f94dcac2357733df89"
+      }
+    ],
+    "segment_identity_provenance": "Segment identities independently checked in the local bundle whose fresh image matches the owner-supplied digest; no device dump included.",
+    "fresh_image_role": "Generated reference-build image identity; not the device Flash/readback digest after Preserve Data, which retains user-specific data."
+  },
+  "pipeline_checks": {
+    "docker_build": "PASS",
+    "reproducibility_check": "PASS",
+    "artifact_verification": "PASS",
+    "preserve_data_preflight": "PASS",
+    "flash_verification": "PASS",
+    "full_flash_readback_protected_data_verification": "PASS"
+  },
+  "hardware_tests": {
+    "passed": 9,
+    "total": 9,
+    "cases": [
+      {
+        "id": 1,
+        "test": "Normal boot launches CrossPoint",
+        "status": "PASS"
+      },
+      {
+        "id": 2,
+        "test": "EPUB opens successfully",
+        "status": "PASS"
+      },
+      {
+        "id": 3,
+        "test": "CrossPoint > Switch to Seeedash",
+        "status": "PASS"
+      },
+      {
+        "id": 4,
+        "test": "Seeedash launches and responds correctly",
+        "status": "PASS"
+      },
+      {
+        "id": 5,
+        "test": "Reset from Seeedash returns to CrossPoint",
+        "status": "PASS"
+      },
+      {
+        "id": 6,
+        "test": "Up + Reset emergency boot launches Seeedash",
+        "status": "PASS"
+      },
+      {
+        "id": 7,
+        "test": "Switching works without USB power",
+        "status": "PASS"
+      },
+      {
+        "id": 8,
+        "test": "Books and settings are preserved",
+        "status": "PASS"
+      },
+      {
+        "id": 9,
+        "test": "Sleep and wake work in both systems",
+        "status": "PASS"
+      }
+    ]
+  },
+  "scope": {
+    "exact_artifact_only": true,
+    "owner_reported_hardware_validation": true,
+    "future_builds_hardware_tested": false,
+    "other_devices_or_revisions_validated": false,
+    "installation_path": "Preserve Data",
+    "battery_switching": "PASS: menu switching without USB; emergency Up+Reset power source not specified",
+    "sleep_wake": "PASS: functional sleep/wake in both systems; cycle count, long-term stress and held-button matrix not supplied"
+  },
+  "not_established": [
+    "Up + Reset specifically on battery power",
+    "Long-term sleep/wake stress and Up held on wake",
+    "Fresh Install or factory Recovery performed on hardware",
+    "Power-cut atomicity or fault injection",
+    "Other devices or hardware revisions",
+    "Cross-host bit reproducibility"
+  ],
+  "ota": "UNSUPPORTED/FORBIDDEN",
+  "redistribution": "Source-only policy unchanged; no firmware, Docker image or device backup published."
+}

@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "manifest_version": "1.1.0",
+  "default": "cp-2.0.0-seeedash-1.2.0",
+  "combinations": [
+    {
+      "id": "cp-2.0.0-seeedash-1.2.0",
+      "channel": "stable",
+      "crosspoint": {
+        "version": "2.0.0",
+        "commit": "e8299b5f126817282939059d6505f90429489276",
+        "patch_sha256": "1be2135ed321ede36dbe04d2980c13c346072c117ee02ecf80b5c86904848e2c"
+      },
+      "seeedash": {
+        "version": "1.2.0",
+        "bytes": 33292288,
+        "sha256": "5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2",
+        "registry_commit": "f0479400594d8f9a3d7fd7b282f2d7b2a1bdbd0e"
+      },
+      "bootloader": {
+        "version": "stage4",
+        "protocol": "STKY-BOOT-V1",
+        "source_sha256": {
+          "firmware/CMakeLists.txt": "870869fbf254af36589348a14c70effa1eac3a7912f14d8b731423b0cdae6563",
+          "firmware/bootloader_components/main/CMakeLists.txt": "b8ae9a4345580aa4407c806ce2d5f2b85cc49f89b9cee657f398c56cf238f53a",
+          "firmware/bootloader_components/main/boot_policy.c": "20e536fe202521955c68f67437dac7d5c40f809ab2995943c9217801592f7edb",
+          "firmware/bootloader_components/main/bootloader_start.c": "4f3421d15ec870ccfea5e73ef0e7fa0abc0389000ef448c9f92354396466a51c",
+          "firmware/include/boot_contract.h": "471515f83c8e439d7180c544fc2252c9a7797ab68d37583b77beca99666d7658",
+          "firmware/include/boot_policy.h": "14ea318c1c3a0aa2ec916f766e802bd61829dc952cc558dd31d4efb20c2fffbc",
+          "firmware/include/crosspoint_pin.h": "5b201a7d47f9d3ff86422bf3a659a7e747695d5fbc62e4f3d1f5f99b6ef98496",
+          "firmware/main/CMakeLists.txt": "e59b75a3ea997a939c7d1c9a096f4a193df73de7c17a8e47b34cf5a5048a2a49",
+          "firmware/main/unused.c": "7a641c3af06fd7c046c5c29824e678b2ff914ef64ae2f91f23c42af59dd7efed",
+          "firmware/sdkconfig.defaults": "3e303690e9ce868bf1e62c52a66df6909880e1f4402e4cfcae89f99bc6b18ab7"
+        }
+      },
+      "partitions": {
+        "id": "protected-reference-32m",
+        "csv": "partitions/sticky-32m.csv",
+        "csv_sha256": "e41ed43bd2b91975f9d0b3d5238ab6cf68430700e72eb2bf8135d26d7e55a16a",
+        "table_sha256": "51fc24d4da9b5bafb4bef860874d891d6ad29044c1724e5f05882724d83be812"
+      },
+      "build_profile": {
+        "environment": "sticky-dualboot-test",
+        "file": "crosspoint/profile.ini",
+        "sha256": "c1e26a0c980679b01ba4dc53a7a2913784c80abf9107dfc9dbf182dd398517fc"
+      },
+      "hardware_validation": {
+        "status": "owner-reported-stage4",
+        "report": "manifests/hardware-test-report.json",
+        "new_build_tested": false,
+        "docker_build_tested": false,
+        "scope": "Physical device evidence only: docker_build_tested refers to Docker-produced firmware, not successful tools-image construction"
+      },
+      "factory_partition_sha256": {
+        "nvs": "df25ce5ed7c0d1d3b7d0f9f75e2d1db45e3ea0a8ac198b0ae24efb87aae7563a",
+        "otadata": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f",
+        "phy_init": "f47a8ec3e9aff2318d896942282ad4fe37d6391c82914f54a5da8a37de1300c6",
+        "app0": "23d7b6419b297e0105533571b7ea351873d92257b99aead62e763ba87ca3587e",
+        "sys_storage": "8d16571f251516cc18d35d7ee09621717b04296711e5ac639d7733f5bef79c7d",
+        "usr_storage": "058f78649078d2e80a9abbe812c7d1c4e065c77bde5f8d3cdd40d1ee7bb88457"
+      },
+      "integration_sources_sha256": {
+        "crosspoint/capture_config.py": "af35bf584f912d1924b14429040bac4691219f6aa69981a785297495df1f0ca5",
+        "crosspoint/flash_guards.c": "cf2d2cf7f0e253044c7494675eb915dee0ed3f40bade78e5b5dc60fb3839ab60",
+        "crosspoint/link_flags.txt": "23bd21e8158e24a8eedae1a56e767037049c6e3a519b7201fa63968c7a13a3f8",
+        "crosspoint/nvs_isolation.c": "ce6203d6de46fc4f01225dffa4906708c17118a092d312c102aeb04878a9e501",
+        "crosspoint/platformio_build.py": "699cf2b9e39ff8ee166a6ba49fe22ba73f6ca934ada4d36633e4374fba539b43",
+        "crosspoint/profile.ini": "c1e26a0c980679b01ba4dc53a7a2913784c80abf9107dfc9dbf182dd398517fc"
+      }
+    }
+  ],
+  "policy": "Unapproved versions are experimental. Neither upstream detection, compilation nor offline tests promote a combination to stable. New artifacts are not hardware validated."
+}

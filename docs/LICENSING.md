@@ -34,3 +34,9 @@ Before a public CrossPoint BIN can be cleared, finish the combined-work compatib
 The bootloader source is included with its applicable terms. A compiled loader also links IDF/toolchain components (including Xtensa HAL, newlib, GCC runtime and micro-ecc). Although relevant permissive and runtime-exception notices were located, a separate complete binary dependency/notice closure has not been established for this release. To keep the public package unambiguous and avoid an unsafe standalone pinned loader, **no compiled bootloader is included either**.
 
 License copies for examined dependencies are provided for traceability. They are not an assertion that every dependency is included in this source package or that those texts alone satisfy all binary obligations. Reassess the exact final ELF/map and complete dependency sources before changing the source-only policy.
+
+## v1.1.0 local Docker tooling
+
+The Dockerfile/launcher are original integration source under the scoped MIT grant. The tools image is built locally, with upstream SDK/compiler/Python dependencies under their own terms; no prebuilt image is distributed or automatically pushed to a registry. ESP-IDF's dependency-constraint snapshot retains its upstream provenance and Apache-2.0 notice where applicable. A tools-image redistribution audit is separate from this source release.
+
+The official Seeedash download occurs only when the user runs a local build, in a disposable container workspace. Generated firmware is exported to a local output bind directory. Neither that output nor a runtime container snapshot may be uploaded, committed into an image layer, or attached to public Releases under the existing policy. CrossPoint combined-binary obligations remain unresolved. New dependency pins do not change any firmware redistribution permission.

@@ -4,7 +4,7 @@
 
 CrossPoint starts by default. Its **Settings → System → Switch to Seeedash** menu starts the original Seeedash application. A physical Reset without Up returns to CrossPoint.
 
-Version **v1.0.0** packages the Stage 4 integration. The project owner reports that the Stage 4 update, both applications, USB switching, menu switching on battery and physical Reset return work on their device. This is a report from one device, not validation of every hardware revision. A build from this repository is a new artifact until tested on hardware; see [validation](docs/VALIDATION.md).
+**v1.1.0** adds a local Docker builder/installer CLI without changing that runtime. The owner reports a full Ubuntu build and Preserve Data installation, including flash/protected-data verification and **9/9 hardware tests PASS** on one real Sticky for image `e4dcb8…f073`; see the [exact-build hardware report](docs/VALIDATION.md). The local bundles also passed the [final audit](docs/V1.1_FINAL_AUDIT.md). The project owner reports that the Stage 4 update, both applications, USB switching, menu switching on battery and physical Reset return work on their device. This is a report from one device, not validation of every hardware revision. This validates the recorded artifact and reported conditions only. Future rebuilds and other devices remain untested by default; see [validation](docs/VALIDATION.md).
 
 > **All standard OTA updates are unsupported and forbidden.** Do not use CrossPoint OTA, Seeedash firmware/resource updates, or child-device updates. They can overwrite the other application or its data. Keep Seeedash offline and unpaired for this release.
 
@@ -12,7 +12,7 @@ Version **v1.0.0** packages the Stage 4 integration. The project owner reports t
 
 This is a **source release**. It includes the custom bootloader, a pinned CrossPoint patch, the partition layout, build/verification scripts, notices and documentation. It contains **no factory Seeedash binary, complete Flash image, device dump, credentials or user data**.
 
-Seeedash binary redistribution permission has not been established. CrossPoint's MIT license also does not cover every library in its compiled firmware; GPL/LGPL corresponding-source and relinking obligations have not been closed for a public binary package. Compiled firmware assets are therefore withheld in v1.0.0. The local build creates a matched update pair and, optionally, a complete 32 MiB fresh-install image. See [licensing and provenance](docs/LICENSING.md).
+Seeedash binary redistribution permission has not been established. CrossPoint's MIT license also does not cover every library in its compiled firmware; GPL/LGPL corresponding-source and relinking obligations have not been closed for a public binary package. Compiled firmware assets are therefore withheld in v1.0.0 and v1.1.0. The local build creates a matched update pair and, optionally, a complete 32 MiB fresh-install image. See [licensing and provenance](docs/LICENSING.md).
 
 ## Hardware and controls
 
@@ -26,9 +26,9 @@ Seeedash binary redistribution permission has not been established. CrossPoint's
 | Normal cold start / physical Reset without Up | CrossPoint |
 | CrossPoint menu → Switch to Seeedash | Validated private journal request, software restart, Seeedash; reported working on battery |
 | Up + physical Reset | Emergency Seeedash selection; reported working with USB |
-| Deep-sleep wake | Resume selected system by journal; physical Up selection ignored |
+| Deep-sleep wake | Resume selected system by journal; physical Up selection ignored by policy; basic sleep/wake in both systems owner-reported PASS for the exact v1.1.0 build |
 
-For emergency selection, hold Up through Reset for at least 600 ms, then release it within the next 2 seconds and leave it released for 30 ms. A permanently held button is rejected. Battery Up+Reset is **not confirmed**. This gesture does not enter the ESP32 ROM download mode.
+For emergency selection, hold Up through Reset for at least 600 ms, then release it within the next 2 seconds and leave it released for 30 ms. A permanently held button is rejected. Emergency Up+Reset passed, but its battery-only power condition was not specified; battery Up+Reset is **not confirmed**. This gesture does not enter the ESP32 ROM download mode.
 
 ## Device photos
 
@@ -56,6 +56,24 @@ flowchart TD
 ```
 
 The factory application and storage extents stay at their original addresses. CrossPoint has its own NVS. `app1` is a **test** application, not a second native OTA slot. The loader uses a separate two-sector `bootstate` journal. [Architecture and full partition map](docs/ARCHITECTURE.md).
+
+## Docker builder (v1.1.0)
+
+No manual host ESP-IDF or PlatformIO installation is needed with Docker Engine on Linux or Docker Desktop + WSL2 on Windows11:
+
+```sh
+git clone https://github.com/spyro-po/reterminal-sticky-dualboot.git
+cd reterminal-sticky-dualboot
+git switch --detach v1.1.0
+./sticky-installer.sh list
+./sticky-installer.sh build
+./sticky-installer.sh verify --mode fresh
+./sticky-installer.sh info --mode fresh
+```
+
+The only approved source combination is **CrossPoint2.0.0 + Seeedash1.2.0 / Stage4**. All image creation is local at runtime; the tools image and public source contain no Seeedash or generated Flash image. Local output is in `out/cp-2.0.0-seeedash-1.2.0/`. No command flashes a device. For Preserve Data, a verified full device backup and explicit protected-layout acknowledgement are mandatory.
+
+Read [Docker setup](docs/DOCKER_INSTALL.md), [Windows11 steps](docs/WINDOWS_INSTALL.md), [compatibility](docs/COMPATIBILITY.md) and [upgrading](docs/UPGRADING.md). Docker execution, source compilation and physical device validation are separate results; see the [v1.1 validation record](manifests/v1.1-validation.json). Unknown upstream versions stay experimental and cannot be selected as stable.
 
 ## Install
 

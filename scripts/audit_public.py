@@ -8,8 +8,9 @@ import zipfile
 from common import ROOT,require,sha
 
 ROOT_FILES={'.clang-format','.gitattributes','.gitignore','README.md','LICENSE','NOTICE','VERSION',
-            'CHANGELOG.md','RELEASE_NOTES.md','requirements-build.txt','SOURCE_FILES.sha256'}
-PREFIXES={'firmware','crosspoint','partitions','patches','scripts','tests','docs','licenses','manifests'}
+            'CHANGELOG.md','RELEASE_NOTES.md','requirements-build.txt','SOURCE_FILES.sha256',
+            'Dockerfile','.dockerignore','sticky-installer.sh'}
+PREFIXES={'firmware','crosspoint','partitions','patches','scripts','tests','docs','licenses','manifests','docker'}
 FORBIDDEN_SUFFIXES={'.bin','.elf','.map','.log','.pdf','.png','.jpg','.jpeg','.zip','.gz','.env','.pem','.key'}
 PATTERNS=[rb'-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----',
           rb'gh[pousr]_[A-Za-z0-9_]{30,}',rb'github_pat_[A-Za-z0-9_]{40,}',
@@ -19,7 +20,7 @@ PATTERNS=[rb'-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----',
 def check_file(name,data):
     p=PurePosixPath(name)
     require(not p.is_absolute() and '..' not in p.parts,'Unsafe path: '+name)
-    require((len(p.parts)==1 and name in ROOT_FILES) or (len(p.parts)>1 and p.parts[0] in PREFIXES),
+    require((len(p.parts)==1 and name in ROOT_FILES) or (len(p.parts)>1 and p.parts[0] in PREFIXES) or name=='.github/workflows/upstream-check.yml',
             'File outside publication allowlist: '+name)
     require(not any(part.startswith('.') for part in p.parts[1:]),'Hidden nested file: '+name)
     require(p.suffix.lower() not in FORBIDDEN_SUFFIXES,'Binary/private artifact type: '+name)

@@ -1,13 +1,74 @@
-# v1.0.0 — Stage 4 source release
+# v1.1.0 — Docker Firmware Builder & Installer
 
-CrossPoint EPUB reading and factory Seeedash 1.2.0 share a Seeed reTerminal Sticky with ESP32-S3 and 32 MiB Flash. CrossPoint is the default. Select **Settings → System → Switch to Seeedash** to restart into Seeedash; physical Reset without Up returns to CrossPoint.
+**Source-only release. Generate firmware locally; no firmware or Docker image is distributed.**
 
-The owner reports the Stage 4 update and menu switching on battery working on their physical device. Up+Reset is confirmed with USB only. Newly rebuilt firmware has not been tested on hardware by the release preparer. Read `docs/VALIDATION.md` for actual offline results and limits.
+Build the approved reTerminal Sticky Dual Boot firmware locally using Docker
+Engine on Linux or Docker Desktop with WSL2. Host installation of ESP-IDF and
+PlatformIO is no longer needed. The Stage 4 runtime, firmware versions, partition
+layout, book storage and OTA restrictions are unchanged.
 
-**Public assets are source, patches, documentation, manifests, licenses and SHA256SUMS only.** There is no precompiled installation/update BIN in this release. Seeedash binary redistribution permission is unresolved; CrossPoint's combined-library binary compliance also requires further work. Do not mirror the vendor BIN or upload a locally merged image.
+## Features
 
-Build locally using `docs/BUILD.md`. Choose destructive Fresh Install or a checked two-segment Update / Preserve Data for an already compatible device. Keep a verified full backup and establish ROM recovery before writing. Never install a loader/application from different pairs. Updates are not power-fail atomic.
+- `sticky-installer.sh list`, `build`, `verify`, `info` and `check-updates`.
+- Pinned tooling with separate Python environments for PlatformIO, application
+  ESP-IDF5.5.5 and bootloader ESP-IDF5.4.
+- Official Seeedash download and SHA-256 verification at local build time,
+  followed by the pinned patch, compilation and integrity/partition audits.
+- Local six-file bundle: `fresh-32MiB.bin`, matched `bootloader.bin` and
+  `crosspoint.bin`, `segments.json`, `build-report.json` and `SHA256SUMS.txt`.
+- `--reproducibility-check` compares two clean builds before export; failed
+  builds retain private diagnostics under the output volume.
+- Preserve Data preflight checks the full device backup, protected layout,
+  installed Seeedash and code-sector boundaries before printing instructions.
+- Read-only upstream monitoring never promotes versions or publishes firmware.
 
-**All standard OTA, Seeedash firmware/resource/child-device updates and CrossPoint OTA are unsupported and forbidden.** Keep Seeedash offline and unpaired. Battery Up+Reset, broad sleep/wake behavior, runtime stack high-water and other hardware revisions remain unverified.
+## Approved combination and validation
 
-SHA-256 manifests detect corruption, not publisher identity. No artifact in this release contains device credentials, private backups or user books.
+Only `cp-2.0.0-seeedash-1.2.0` is supported: pinned CrossPoint2.0.0,
+Seeedash1.2.0 and the Stage 4 bootloader/protected 32 MiB layout.
+
+The owner reports successful full Ubuntu Docker build, reproducibility check,
+artifact verification, Preserve Data preflight, flash verification, full Flash
+readback/protected-data verification and **9/9 physical hardware tests PASS**
+on one Seeed reTerminal Sticky (ESP32-S3, 32 MiB). The supplied local bundles also passed independent
+checks of integrity, layout bounds, factory extents and simulated Preserve Data
+writes. Their fresh-image SHA-256 is:
+
+```text
+e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073
+```
+
+This identifies the audited, owner-tested build bundle, not a public download,
+a device Flash/backup digest after Preserve Data, or a universal cross-host hash. The nine tests cover normal CrossPoint boot,
+EPUB opening, menu switching, responsive Seeedash, Reset return, emergency
+Up+Reset, switching without USB, preserved books/settings and sleep/wake in both
+systems. See [the exact-build hardware report](manifests/v1.1-hardware-validation.json). Verify your own bundle using its checksums and the CLI.
+See [the final audit](docs/V1.1_FINAL_AUDIT.md) for segment identities and evidence
+limits. Offline tests and the existing PR's tools-image smoke CI passed.
+
+## Installation and upgrade
+
+Start with [Docker setup](docs/DOCKER_INSTALL.md) or the
+[Windows11/WSL2 guide](docs/WINDOWS_INSTALL.md). The installer **never flashes a
+device**; `info` prints instructions for a separate manual esptool operation.
+
+Fresh Install destroys existing Flash data. Preserve Data requires an already
+compatible Dual Boot device and writes the matched pair at `0x0` and `0x690000`.
+Keep a verified private full backup and establish ROM recovery first. Existing
+v1.0.0 devices need no reflashing merely to use the new builder.
+
+## Limits and distribution
+
+- Public assets are source only. No Seeedash, application/bootloader BIN, complete
+  Flash image, device dump or prebuilt tools image is distributed. Local output
+  must not be uploaded; see [LICENSING.md](docs/LICENSING.md).
+- All standard OTA and Seeedash resource/child updates remain forbidden. The
+  unmodified factory application cannot be sandboxed by this bootloader.
+- Paired updates are not power-fail atomic. See [Recovery](docs/RECOVERY.md).
+- Windows installation has been reviewed but not executed. Hardware results are
+  owner-reported and apply only to the recorded image, one device and reported
+  conditions. Future rebuilds/devices remain untested by default.
+- Battery menu switching and basic sleep/wake in both systems passed. Emergency
+  Up+Reset power source, long-term sleep/wake stress and held-button wake tests
+  were not specified. Fresh Install/factory Recovery hardware tests were not reported.
+- Same-environment repeat builds passed; cross-host bit identity is not promised.

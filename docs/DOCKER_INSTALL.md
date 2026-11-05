@@ -1,0 +1,366 @@
+# Docker Firmware Builder & Installer (v1.1.0)
+
+v1.1.0 wraps the existing Stage 4 build and verification pipeline. It does **not** flash devices. Use the released source tag `v1.1.0`; no prebuilt firmware or Docker image is published.
+
+Final validation: the owner reports full Ubuntu Docker build, repeat-build
+comparison and artifact verification PASS. Both supplied local bundles passed
+the [final audit](V1.1_FINAL_AUDIT.md). The troubleshooting sections below record
+earlier failures and their fixes. The owner also reports Preserve Data/flash/
+protected-readback verification and 9/9 hardware tests for the [exact image](VALIDATION.md).
+Windows and future rebuilds/devices remain unverified; no reviewer Docker or
+hardware execution is claimed.
+
+## Requirements
+
+Use Linux with a working Docker Engine, or Windows 11 with Docker Desktop's **Linux containers / WSL2** backend. The launcher runs in Bash on Linux or WSL2. No host ESP-IDF, PlatformIO or compiler installation is needed. The initial supported container platform is **linux/amd64**; ARM/emulated hosts are not validated. Allow at least 20 GiB free disk space, several GiB RAM and a reliable network connection. Download/build time depends on network and CPU and can be substantial.
+
+Docker Desktop has its own licensing terms; check [Docker's Windows installation documentation](https://docs.docker.com/desktop/setup/install/windows-install/). See [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md) for the complete Windows path.
+
+## APT snapshot consistency
+
+The tools image uses `docker/apt.sources`: both the `debian` archive (`bookworm` and `bookworm-updates`) and the separate `debian-security` archive (`bookworm-security`) are pinned to **20261102T000000Z**. The base image digest and Python version are unchanged. The source file hash and required suites are recorded in `manifests/builder.lock.json` and checked offline.
+
+The pinned amd64 base image, created on 2026-10-28, already contains security-updated runtime packages. Replacing its sources with `bookworm main` alone removed the matching development/runtime dependencies:
+
+| Package family | Installed base runtime | Main-only snapshot | Matching security snapshot |
+| --- | --- | --- | --- |
+| OpenSSL | libssl3 3.0.22-1~deb12u2 | libssl-dev 3.0.20-1~deb12u2 | libssl-dev/libssl3 3.0.22-1~deb12u2 |
+| Perl | perl-base 5.36.0-7+deb12u4 | perl 5.36.0-7+deb12u3 | perl/perl-base 5.36.0-7+deb12u4 |
+
+Those versions were checked against the digest-verified official base layers and Debian's snapshot package indexes. This metadata check is not a successful Docker build or complete APT solver test. APT still verifies Debian signatures through the archive keyring. Only historical `Valid-Until` expiry is disabled, as [Debian's snapshot documentation](https://snapshot.debian.org/) requires for old snapshots. Live mirrors, unsigned/trusted sources, forced downgrades and ignored APT errors are not used.
+
+For the reported Ubuntu Docker Engine failure, pull this branch update and run from the repository root:
+
+```sh
+git fetch --tags origin
+git switch --detach v1.1.0
+./sticky-installer.sh build --reproducibility-check
+```
+
+The changed source `COPY` invalidates the APT layer automatically. To isolate the tools-image test without compiling firmware, run:
+
+```sh
+docker build --no-cache --platform linux/amd64 --tag reterminal-sticky-dualboot-builder:1.1.0 .
+```
+
+The patch was prepared in an environment without a Docker daemon; its image build/run remains unverified locally. APT failure must stop the build. Do not bypass it or change the stable firmware combination to make installation proceed.
+
+## ESP-IDF tool installation and paths
+
+The pinned SDK commit `67c1de1eebe095d554d281952fde63c16ee2dca0` has a tool-selection issue: `idf_tools.py install xtensa-esp-elf@esp-14.2.0_20241119` is filtered against bare tool names before version parsing. It returns0 with an empty installation list and can leave the tools directory absent. This was reproduced against the real pinned script on the host; creating the directory alone would not verify that a compiler was installed.
+
+The image now creates `IDF_TOOLS_PATH` explicitly, calls `install --targets esp32s3 xtensa-esp-elf`, checks the compiler at the exact versioned path and runs its `--version`, then copies constraints to a complete filename and runs the dependency check. The selected recommended version remains `esp-14.2.0_20241119`, fixed by the unchanged SDK commit/tool metadata and checked by the compiler path. The tool archive SHA-256 and all dependency version pins are unchanged. No upstream SDK source is patched.
+
+| Setting | Image construction | Unprivileged runtime |
+| --- | --- | --- |
+| IDF_PATH / IDF54_PATH | `/opt/esp/idf` | Same immutable SDK |
+| IDF_PYTHON_ENV_PATH | `/opt/esp/idf-python` | Same Python environment |
+| IDF54_PYTHON | `/opt/esp/idf-python/bin/python` | Same interpreter for SDK actions |
+| IDF_TOOLS_PATH | `/opt/esp/tools` | `$HOME/.espressif`, writable metadata and constraints |
+| Compiler | `/opt/esp/tools/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp-elf-gcc` | Reached through the runtime `tools` symlink |
+| Constraints | `/opt/esp/tools/espidf.constraints.v5.4.txt` | `$HOME/.espressif/espidf.constraints.v5.4.txt` |
+
+See [ESP-IDF5.4 tool documentation](https://docs.espressif.com/projects/esp-idf/en/v5.4/esp32/api-guides/tools/idf-tools.html). The dependency check uses the explicit SDK Python environment and the pinned constraints file; it is not disabled. The custom environment is installed from exact package locks rather than downloading a new Python dependency set.
+
+The remaining Dockerfile order was reviewed: Docker `COPY` creates lock/source destination directories, venv creation precedes SDK tool invocations, Git checkout/pin checks precede installation, compiler/constraints checks precede the final source audit, and privilege drop occurs last. The entrypoint checks immutable prerequisites and creates its writable workspace/metadata/helper parents before copying or linking. Static regressions reject broken paths and reordered steps.
+
+Real tool installation and Python dependency checks passed in isolated host directories, including the runtime symlink/metadata layout. The owner subsequently confirmed the complete Ubuntu build after the runtime fixes below. A Docker daemon is still unavailable in the preparation environment; no local reviewer container execution or new hardware test is claimed.
+
+## Build failure diagnostics
+
+### Application ESP-IDF Python dependencies
+
+There are three Python environments with different dependency requirements:
+
+| Environment | Purpose | Lock |
+| --- | --- | --- |
+| PlatformIO `penv` | pioarduino tools/helper runtime | `docker/requirements-pio.lock` |
+| `penv/.espidf-5.5.5` | CrossPoint Arduino/IDF component build | `docker/requirements-app-idf.lock` |
+| `/opt/esp/idf-python` | Stage4 bootloader, ESP-IDF5.4 | `docker/requirements-idf.lock` and IDF5.4 constraints |
+
+Pioarduino creates the nested application environment during the Arduino core
+rebuild. Its pinned builder requests `cryptography~=44.0.0`,
+`pyparsing>=3.1.0,<4`, `idf-component-manager~=2.4.11`, and
+`esp-idf-kconfig~=3.7.0`. Previously that install inherited the outer PlatformIO
+constraint `cryptography==50.0.2`, making resolution impossible. The upstream
+builder ignores the dependency-install action's status and still writes its
+environment metadata. CMake subsequently reports the missing component manager.
+Installing a package into the outer runtime or bootloader Python cannot fix that
+application interpreter.
+
+Before clean/build, the builder now initializes the exact nested environment
+explicitly. Its separate lock contains all59 packages resolved from the pinned
+SDK's core requirements plus pioarduino's four requirements: component manager
+2.4.11, Kconfig3.7.0, cryptography44.0.3 and pyparsing3.2.5. Every package has an
+exact version and artifact SHA-256 hashes. No versions are resolved during the
+installer run. The pioarduino Kconfig requirement differs from the standalone
+Espressif5.5 constraints; this lock targets the pinned pioarduino integration,
+not a replacement for the bootloader's5.4 dependency set.
+
+The bootstrap verifies the upstream builder/core-requirements hashes, checks
+the selected interpreter's prefix before installing anything, then uses explicit
+`uv pip sync --python ... --require-hashes`, dependency checks and isolated imports
+through `.espidf-5.5.5/bin/python`. Outer constraints are replaced only for those
+application-bootstrap subprocesses. The outer PlatformIO environment and
+bootloader environment are unchanged. Existing/partial application caches are
+synced and checked again. Upstream cache metadata is written only after success,
+and pioarduino's own dependency checks still execute; no skip marker or script
+patch is used. A changed upstream bootstrap contract stops the build for review.
+
+Logs named `installer-first-app-idf-*.log` and their status files record creation,
+interpreter identity, installation, dependency checks and import/version probes.
+The component versions and application lock hash also appear in `build-report.json`.
+
+The additional `fatal: not a git repository` line can come from IDF's Git probes
+against SDK release archives without `.git` metadata. A host reproduction of
+the pinned SDK's CMake submodule check emitted that text but returned0. This
+does not make every Git failure harmless: pinned CrossPoint/FreeInk checkout
+checks remain fatal. In the reported log the decisive failure is the Python
+import error at `build.cmake:633`; the exact source of its separate Git line
+cannot be identified from that excerpt alone.
+
+### First clean on an empty PlatformIO cache
+
+The pinned PlatformIO core runs a clean target through SCons and its `pre:`
+scripts, then returns before the normal project-dependency installation stage.
+Installing the platform globally does not select the Arduino environment:
+`framework-arduinoespressif32`, `framework-arduinoespressif32-libs` and
+`framework-espidf` remain optional and can be absent. CrossPoint's unchanged
+`patch_pioarduino_cache.py` needs the libs package even during clean. Without
+it, `get_package_dir` returns `None` and `Path(None)` raises `TypeError`.
+
+The builder now runs `pio pkg install --environment sticky-dualboot-test --no-save`
+in the prepared, pinned checkout before clean or compilation. This installs the
+environment's declared dependencies without running SCons/pre-scripts and does
+not rewrite the project configuration. It uses the same approved platform,
+framework URLs and exact library versions/Git commits as a normal build; there
+is no update-to-latest operation. No version pin was changed.
+
+Before installation, the selected framework URLs in the cached platform manifest
+must match the existing dependency lock. After installation, the three required
+framework packages must have matching source/manifest metadata and the libs
+package must contain ESP32-S3 `sdkconfig` or the rebuilt cache's `sdkconfig.orig`.
+Incomplete or mismatched packages stop the build before clean. These are
+prerequisite checks, not new archive SHA-256 guarantees; existing final-link,
+configuration, partition and image-integrity gates remain mandatory.
+
+Initialization also runs for an existing cache, including the second reproducibility
+pass, so a partial cache is not assumed ready. CrossPoint's pre-scripts still run
+during clean/build; none are edited, disabled or skipped. Docker keeps its private
+cache inside each disposable container; no host package installation is required.
+The new step's output/status are retained as `installer-first-dependencies.log`
+and `installer-first-dependencies.status.json` (and `installer-repeat-*`).
+
+Validation outside Docker reproduced the original `TypeError` on a separate
+empty installed-package cache seeded only with the locked Python environment.
+After downloading the approved project dependencies, clean returned0. Repeating
+initialization and clean on that cache also returned0; a previously populated
+cache passed separately. No firmware compilation, container execution or new
+hardware test was performed for this fix.
+
+### Locating the correct run
+
+Each installer build prints a unique diagnostic directory under the output mount:
+`/output/diagnostics/<UTC-timestamp>-<random-id>/`, available on the host as
+`out/diagnostics/<same-id>/` (or under your `--output` directory). It survives
+`docker run --rm` even if the build fails. These private logs are outside the
+six-file firmware bundle; do not upload the whole output directory.
+
+`installer-first-driver.log` captures the native builder, while
+`installer-first-clean.log` captures the actual PlatformIO clean command.
+Each has a matching `.status.json` with command, working directory, PID, run ID,
+UTC start/end times and actual `returncode`. Repeat builds use `installer-repeat`.
+Zero means success; negative values indicate POSIX signals. A spawn failure has
+`outcome: spawn_error` and no process return code. A missing completion time or
+`outcome: running` means no final status was recorded (for example, abrupt container
+termination); never infer success from the last output line.
+
+On failure the console includes the bounded final stdout/stderr and exact log/status
+paths. Inspect the inner tool's status as well as the driver's exit code. Files are
+created exclusively and each build gets a new directory, so retries do not replace
+earlier evidence. No environment dump or device backup is recorded. If the output
+directory is not writable by the invoking UID/GID, diagnostics creation fails
+before compilation. Fix ownership of your chosen output directory; do not run
+the container privileged or weaken validation.
+
+The earlier error referenced `.local/logs/installer-first-clean.log` inside the
+disposable container workspace. The launcher does not mount the host repository
+there. A same-named file in the host repository therefore cannot establish the
+result of that container run. Textual PlatformIO `SUCCESS` is not an exit status:
+a process can fail later or be terminated. That discarded run remains untraceable;
+the subsequently captured framework and application-Python failures are diagnosed
+above. No error is ignored. The earlier populated-cache host clean returned0;
+it did not test the cold-cache case or validate a Docker run.
+
+Pull this update and retry on Ubuntu:
+
+```sh
+git fetch --tags origin
+git switch --detach v1.1.0
+./sticky-installer.sh build --reproducibility-check
+ls -lt out/diagnostics
+```
+
+Choose the run ID printed by that invocation, then inspect its clean and driver
+logs/status files. Review logs for private paths or tool messages before sharing
+selected excerpts. If Docker itself is killed before the Python driver runs,
+also retain the host terminal output; no subprocess logger can record a process
+it never started.
+
+## Commands
+
+From the repository root:
+
+```sh
+./sticky-installer.sh list
+./sticky-installer.sh build --combination cp-2.0.0-seeedash-1.2.0
+./sticky-installer.sh verify --mode fresh
+./sticky-installer.sh info --mode fresh
+./sticky-installer.sh check-updates
+```
+
+`list` shows the single approved combination and the source of its hardware evidence. Metadata reports are immutable snapshots; use `check-updates --report another-name.json` when the default report already exists. `check-updates` reads metadata only; its report never grants compatibility. The launcher builds/refreshes the local tools image using Docker's layer cache before running the command. The image contains SDK/tools and reviewed source, **no Seeedash download or generated firmware**. First-time image construction requires the network. Do not assume a first-time `verify` command can run without the cached image/dependencies.
+
+`build` downloads the pinned CrossPoint commit and FreeInk SDK, checks the patch SHA-256 and official Seeedash 1.2.0 SHA-256, compiles the application and its specifically pinned bootloader, runs the existing host/link/partition tests, and verifies the fresh image. Output appears only after all gates pass:
+
+```text
+out/cp-2.0.0-seeedash-1.2.0/
+  fresh-32MiB.bin
+  bootloader.bin
+  crosspoint.bin
+  segments.json
+  build-report.json
+  SHA256SUMS.txt
+```
+
+The report records source pins, component/Python versions, builder/compatibility lock hashes, test results and **hardware_tested_this_build: false**. Existing output is never overwritten. Use `--directory another-name` for another run, and the same option for verification/info. Use `--output /path/to/output-root` to choose the host bind directory. Avoid commas/newlines in bind paths. Output cannot be the repository root or an ancestor.
+
+For an independently recompiled same-environment comparison:
+
+```sh
+./sticky-installer.sh build --directory repeat-check --reproducibility-check
+./sticky-installer.sh verify --directory repeat-check
+```
+
+The builder performs two clean application links and a fresh bootloader project for the repeat, compares both code segments, and refuses export on a mismatch. A reproducibility result must not be inferred from a single successful compilation. Different absolute paths or hosts may change binary hashes.
+
+## Preserve Data
+
+This is only for an existing compatible Dual Boot device. Make and verify a **full 33554432-byte backup from that chip** with host esptool while keeping it in ROM/stub. Then:
+
+```sh
+./sticky-installer.sh verify --mode preserve --backup /private/sticky-before.bin --confirm-layout protected-reference
+./sticky-installer.sh info --mode preserve --backup /private/sticky-before.bin --confirm-layout protected-reference
+```
+
+The backup is mounted as one **read-only file**; it is not copied into the bundle, report or image. Verification checks its exact partition table, installed Seeedash 1.2.0 and full erase-sector boundaries in a simulated paired-code update. The acknowledgement alone is insufficient. A table hash alone is insufficient. The actual backup must pass. See [UPDATE.md](UPDATE.md) for manual paired writes at `0x0` and `0x690000` and protected-byte readback before first boot. Never erase for Preserve Data.
+
+## Manual Linux installation from a Docker bundle
+
+The native `.venv` and `.local/out/build1` paths in the original native-build guides are **not created by Docker**. Use the exported bundle paths below. This separate host Python/esptool environment is only for the manual serial operation; no host ESP-IDF/PlatformIO is required. Install your distribution's Python3 and venv support if missing. Use Bash and run each stage deliberately; `set -e` and the function's exit check stop on command failure.
+
+From the repository root, after a successful Docker build:
+
+```sh
+set -e
+umask 077
+BUNDLE=$(realpath out/cp-2.0.0-seeedash-1.2.0)
+PRIVATE="$HOME/sticky-private"
+mkdir -p "$PRIVATE"
+python3 -m venv "$PRIVATE/esptool-env"
+ESP_PY="$PRIVATE/esptool-env/bin/python"
+"$ESP_PY" -m pip install esptool==4.12.0
+STICKY_PORT=/dev/ttyACM0  # Replace with this device's actual UART port.
+sticky_esptool() {
+  "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" "$@" || return "$?"
+}
+sticky_esptool get_security_info
+sticky_esptool flash_id
+BEFORE="$PRIVATE/before-32MiB.bin"
+test ! -e "$BEFORE"  # Choose a new private filename if this exists.
+test ! -e "$BEFORE.sha256"
+sticky_esptool --after no_reset read_flash 0x0 0x2000000 "$BEFORE"
+test "$(wc -c < "$BEFORE")" -eq 33554432
+sticky_esptool --after no_reset verify_flash 0x0 "$BEFORE"
+sha256sum "$BEFORE" > "$BEFORE.sha256"
+./sticky-installer.sh verify --mode fresh
+(cd "$BUNDLE" && sha256sum -c SHA256SUMS.txt)
+```
+
+Stop unless ROM access is reliable, Flash is32MiB, security/encryption/download restrictions are absent and the backup/readback succeeds. Backups contain private calibration, credentials and possibly keys; keep them outside Git. Never use `--force` or burn eFuses. Use stable USB power. The following two paths are alternatives, not a sequence.
+
+### Fresh Install — destructive
+
+After confirming the complete backup and accepting loss of existing Flash data:
+
+```sh
+set -e
+sticky_esptool --after no_reset erase_flash
+sticky_esptool --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 "$BUNDLE/fresh-32MiB.bin"
+sticky_esptool --after no_reset verify_flash 0x0 "$BUNDLE/fresh-32MiB.bin"
+```
+
+Reset without Up only after verification. Follow the physical test checklist in [INSTALL.md](INSTALL.md); use the Docker bundle path above rather than its native-build example path.
+
+### Preserve Data — existing compatible Dual Boot only
+
+Do **not** erase. With the same freshly captured backup:
+
+```sh
+set -e
+./sticky-installer.sh verify --mode preserve --backup "$BEFORE" --confirm-layout protected-reference
+./sticky-installer.sh info --mode preserve --backup "$BEFORE" --confirm-layout protected-reference
+sticky_esptool --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 "$BUNDLE/bootloader.bin" 0x690000 "$BUNDLE/crosspoint.bin"
+sticky_esptool --after no_reset verify_flash 0x0 "$BUNDLE/bootloader.bin" 0x690000 "$BUNDLE/crosspoint.bin"
+AFTER="$PRIVATE/after-before-boot.bin"
+test ! -e "$AFTER"
+sticky_esptool --after no_reset read_flash 0x0 0x2000000 "$AFTER"
+docker run --rm --platform linux/amd64 --network none --user "$(id -u):$(id -g)" --cap-drop ALL --security-opt no-new-privileges --mount "type=bind,src=$BUNDLE,dst=/bundle,readonly" --mount "type=bind,src=$BEFORE,dst=/before.bin,readonly" --mount "type=bind,src=$AFTER,dst=/after.bin,readonly" --entrypoint /opt/sticky/python/bin/python reterminal-sticky-dualboot-builder:1.1.0 /opt/sticky/source/scripts/preflight.py --bundle /bundle --backup /before.bin --after /after.bin
+```
+
+Only reset after the offline readback comparison passes. The container receives just the bundle and two read-only files, no serial device. Do not add table, OTA, NVS or filesystem images. `0xe000` is factory NVS. As [UPDATE.md](UPDATE.md) explains, code-pair writes are not power-fail atomic and later application writes are outside the preservation promise.
+
+### Linux recovery
+
+For exact-state recovery, write the verified full backup from **this chip** at0x0, then verify it:
+
+```sh
+set -e
+sha256sum --check "$BEFORE.sha256"
+test "$(wc -c < "$BEFORE")" -eq 33554432
+sticky_esptool --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 "$BEFORE"
+sticky_esptool --after no_reset verify_flash 0x0 "$BEFORE"
+```
+
+For destructive official factory defaults without a suitable factory backup, use the standalone host esptool Python to download the fixed official file; no native builder environment is needed. Check its complete size and hash before erasing:
+
+```sh
+set -e
+VENDOR="$PRIVATE/seeedash-1.2.0.bin"
+"$ESP_PY" - "$VENDOR" <<'PY_VENDOR_RECOVERY'
+import hashlib, pathlib, sys, urllib.request
+url='https://raw.githubusercontent.com/Seeed-Projects/reterminal-sticky-playground-registry/f0479400594d8f9a3d7fd7b282f2d7b2a1bdbd0e/firmwares/sticky-factory/firmware/1.2.0/reterminal_sticky_1_2_0.bin'
+data=urllib.request.urlopen(url, timeout=120).read(33292289)
+if len(data)!=33292288 or hashlib.sha256(data).hexdigest()!='5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2':
+    raise SystemExit('Official firmware integrity mismatch: STOP')
+path=pathlib.Path(sys.argv[1])
+if path.exists() and path.read_bytes()!=data:
+    raise SystemExit('Existing vendor file differs: STOP')
+path.write_bytes(data)
+PY_VENDOR_RECOVERY
+sticky_esptool --after no_reset erase_flash
+sticky_esptool --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 "$VENDOR"
+sticky_esptool --after no_reset verify_flash 0x0 "$VENDOR"
+```
+
+The whole-chip erase also clears the final256KiB absent from the vendor file. Reset and provision factory Seeedash after verification. If ROM access fails, follow the board-specific physical guidance in [RECOVERY.md](RECOVERY.md); Up is not a ROM BOOT strap. Do not guess test pads. These manual instructions have not been executed against a device during this work.
+
+## Isolation and licensing
+
+The host runs `docker build/run`. The container receives no Docker socket, serial device, host source mount, credentials or privileged flag. Runtime capabilities are dropped and `no-new-privileges` is set. It runs as the host UID/GID, copies image source into an ephemeral private workspace and writes only its output bind directory. Immutable SDK/tool binaries stay in the tools image; PlatformIO's mutable Python helper environment is separately seeded in the disposable workspace with pinned constraints. No existing container is inspected or changed.
+
+The image pins Python by image digest, ESP-IDF by commit, the compiler archive by IDF's checked tool metadata, Python packages by exact versions, and Debian dependency resolution by a dated snapshot. GitHub Actions are pinned by full commit. This is not a promise of a fully hermetic, cross-host bit-identical build.
+
+**Local outputs contain Seeedash and must not be publicly uploaded.** Do not publish a running container snapshot with `docker commit/export`, any output bundle, or an image into which runtime output was copied. SDK test fixtures/tool binaries are distinct from the forbidden Seeedash/CrossPoint application and complete Flash artifacts. No prebuilt Docker image is published by this project. [LICENSING.md](LICENSING.md) remains authoritative.
+
+All standard OTA paths remain unsupported and forbidden. The owner-tested exact image has 9/9 hardware results recorded in [VALIDATION.md](VALIDATION.md); future Docker outputs do not inherit them automatically. Unreported power/reset/wake conditions and non-atomic paired-update risks remain.

@@ -1,5 +1,7 @@
 # Recovery
 
+Windows11/PowerShell recovery commands and a pinned direct vendor download are also documented in [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md).
+
 Prepare recovery **before** changing Flash. Use stable USB-C power and a data cable. The board's CH343 bridge supports DTR/RTS auto-download. Confirm ROM download works on your physical board; Up/GPIO5 is **not** the GPIO0 boot strap. The physical Reset controls CHIP_PU.
 
 If auto-download fails, a qualified person must locate GPIO0 and CHIP_PU from the actual board revision and [Seeed hardware documentation](https://www.seeedstudio.com/sticky/docs/en/device-guide/hardware-overview/) before attempting manual ROM entry. GPIO0 also serves sensor I2C. Do not guess pads or assume Up+Power enters ROM. If ROM access remains unavailable, seek manufacturer service; software Reset cannot repair an invalid second-stage loader.
@@ -11,7 +13,9 @@ Commands below use esptool **4.12.0**, `ESP_PY` and `STICKY_PORT` as explained i
 Use a verified **33554432-byte backup from this chip**, stored privately with its SHA-256. A different device's backup can contain different calibration and secrets.
 
 ```sh
-sha256sum /private/path/sticky-before.bin
+set -eu
+sha256sum --check /private/path/sticky-before.bin.sha256
+test "$(wc -c < /private/path/sticky-before.bin)" -eq 33554432
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 /private/path/sticky-before.bin
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset verify_flash 0x0 /private/path/sticky-before.bin
 ```
@@ -23,10 +27,10 @@ Reset after verification. This restores bootloader, table, applications, NVS, PH
 **Destructive:** this restores factory firmware and defaults, not personal files or credentials. A complete erase also clears private Dual Boot state and the last 256 KiB coredump area absent from the vendor download.
 
 ```sh
+set -eu
 .venv/bin/python scripts/fetch_seeedash.py
-sha256sum .local/vendor/seeedash-1.2.0.bin
-# Must be: 5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2
-# Exact vendor file length: 33292288 bytes (0x1fc0000).
+printf '5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2  .local/vendor/seeedash-1.2.0.bin\n' | sha256sum --check -
+test "$(wc -c < .local/vendor/seeedash-1.2.0.bin)" -eq 33292288
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset erase_flash
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 .local/vendor/seeedash-1.2.0.bin
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset verify_flash 0x0 .local/vendor/seeedash-1.2.0.bin
@@ -37,3 +41,9 @@ Reset and provision Seeedash again. This is a merged ESP32-S3 factory image at *
 ## Emergency system selection is not recovery
 
 With a valid Dual Boot loader/table, qualified Up+Reset selects Seeedash (USB confirmed), and Reset without Up selects CrossPoint. It does not restore the factory partition table or recover corrupted firmware. Battery menu selection is reported working; battery Up+Reset is still not established.
+
+
+The [owner-reported v1.1.0 validation](VALIDATION.md) covers successful Preserve
+Data installation and protected readback for the exact image. It does not report
+execution of factory Recovery or an interrupted-write recovery. Keep these
+procedures and verified backups ready even after a successful hardware test.

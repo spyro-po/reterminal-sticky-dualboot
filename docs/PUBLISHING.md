@@ -1,16 +1,29 @@
-# Publication checklist
+# Source-only publication
 
-The intended repository name is `reterminal-sticky-dualboot`. Local preparation and a local commit do not authorize publication. The owner explicitly requires confirmation before public repository creation, push or GitHub Release publication.
+Repository: `spyro-po/reterminal-sticky-dualboot`. The owner approved the v1.1.0
+source-only release. Firmware binaries, complete Flash images, Docker images,
+device backups and private data remain excluded. New publication actions need
+owner authorization; this approval covers finalizing PR#1 and v1.1.0.
 
-Before asking for that confirmation:
+1. Audit the exact source commit, licenses, secrets, source inventory and archive.
+   Verify all required CI checks pass and the PR is mergeable.
+2. Mark PR#1 Ready for Review and merge with a merge commit, retaining history.
+   Confirm the default branch contains `989edad` and the hardware report.
+3. Create an annotated `v1.1.0` tag on that merge commit and push that tag only.
+4. Package the clean merged tree with `scripts/package_release.py`. Retain older
+   local packages privately; never upload a stale package or use wildcard uploads.
+5. Publish only `reterminal-sticky-dualboot-v1.1.0-source.zip`, `RELEASE_NOTES.md`
+   and `SHA256SUMS.txt`. The uploaded checksum file must cover the two other assets;
+   no checksum entry may depend on an unpublished companion file.
+6. Download the public assets again, check their hashes and source-only contents,
+   and verify the annotated tag resolves to the merge commit. Test the README's
+   tag checkout and CLI help/list path. No device operation is part of publication.
 
-1. Finish source/build review, offline checks, source inventory and privacy/license audit.
-2. Commit the reviewed source locally; inspect `git status` and the exact commit.
-3. Generate the source-only v1.0.0 assets with `scripts/package_release.py` and verify SHA256SUMS.
-4. State that no firmware BIN, factory image or private backup is included, and disclose outstanding binary-licensing and hardware limits.
+The local packager also writes a source-only manifest for provenance; this need
+not be uploaded as a separate asset. GitHub's automatic source archives contain
+the tracked source tree only. All standard OTA stays unsupported and forbidden.
+Exact-build owner hardware evidence never validates every rebuild or device.
 
-In the preparation environment, GitHub CLI was not installed. The connected GitHub application was authenticated as `spyro-po`; the requested public repository URL returned 404. This is not proof that no conflicting private repository exists. No repository, push, tag or release was published. No GitHub token was copied into this repository.
-
-The available GitHub connector can read source metadata but does not provide the required repository-creation and binary Release-upload operations. After approval, use a properly authenticated GitHub CLI installed from its official distribution, or the GitHub web interface plus Git transport. Prefer browser/device authentication or a credential manager. Never paste access tokens into files, logs, shell history or release assets.
-
-After the owner's approval, recheck the authenticated owner, repository-name availability, staged/committed contents and asset hashes. Create the repository without auto-generating conflicting files, push the reviewed commit, tag that commit as `v1.0.0`, and publish only the audited source archive, release notes, source-only manifest and SHA256SUMS. Do not use wildcard uploads from `.local/` or attach build logs/backups. No publication script in this repository creates a remote repository or uploads anything.
+Use authenticated GitHub CLI/Git with a credential manager or device/browser
+authentication. Never put tokens in source, command arguments, logs or assets.
+No repository script automatically merges, tags, publishes or flashes a device.

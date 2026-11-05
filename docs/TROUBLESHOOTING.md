@@ -21,4 +21,4 @@ A qualified person can capture UART0 using a **3.3 V adapter, RX-only plus commo
 
 ## Sleep/wake checks for a new build
 
-Test each system entering sleep and waking on USB and battery. Confirm the same system resumes and that holding Up across a software restart or sleep wake does not change it. Then test plain physical Reset and qualified Up+Reset separately. These remain validation steps for the installer; this repository makes no new hardware-test claim.
+Test each system entering sleep and waking on USB and battery. Confirm the same system resumes and that holding Up across a software restart or sleep wake does not change it. Then test plain physical Reset and qualified Up+Reset separately. The owner reports basic sleep/wake and emergency selection PASS for the [exact v1.1.0 image](VALIDATION.md). Held-button wake, long-term stress and battery power specifically for emergency Up+Reset were not supplied; repeat checks for future builds/devices.

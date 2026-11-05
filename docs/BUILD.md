@@ -1,5 +1,7 @@
 # Pinned local build
 
+For the Docker path without manual host SDK installation, use [DOCKER_INSTALL.md](DOCKER_INSTALL.md). The native path below remains supported for development.
+
 Run from the repository root on Linux with Git, Python 3.12, a C/C++ host compiler (or the pinned Zig package), and ESP-IDF v5.4's supported build prerequisites. Several GiB of downloads and free disk space are needed. Initial dependency installation requires the network; verification after caching can run offline. The recipe pins source revisions and principal tools; it is not a complete cross-host hermetic dependency lock.
 
 ```sh
@@ -30,7 +32,7 @@ After the application link audit, the builder generates a private CrossPoint dig
 .local/out/build1/update/segments.json
 ```
 
-The pair is inseparable: the bootloader pins this specific CrossPoint body digest. Local build outputs and logs are ignored by Git. Neither success nor a valid hash proves the new pair works on hardware. The CrossPoint UI keeps the tested integration version string `2.0.0-dualboot-menu-test`; this repository's release version is `1.0.0`.
+The pair is inseparable: the bootloader pins this specific CrossPoint body digest. Local build outputs and logs are ignored by Git. Neither success nor a valid hash proves the new pair works on hardware. The CrossPoint UI keeps the tested integration version string `2.0.0-dualboot-menu-test`; the new tooling version is `1.1.0`; `segments.json` retains its compatible format version `1.0.0`.
 
 Create the optional local fresh image only after the build gates pass:
 
@@ -42,6 +44,19 @@ This output contains Seeedash and must not be uploaded. The official download is
 
 For a clean same-path reproducibility comparison, run the builder again with `--clean-app --label build2`, then compare both code-segment hashes. `SOURCE_DATE_EPOCH` is fixed in the source lock. Cross-host or different-path bit reproducibility is not promised. Saved dependency names and observed build versions are in `manifests/`; do not use floating upstream sources for this release.
 
+The native builder explicitly installs the selected PlatformIO environment's
+dependencies before clean/build and checks framework source metadata and ESP32-S3
+SDK files. This is required on an empty cache because PlatformIO clean executes
+CrossPoint pre-scripts before its normal dependency-installation stage. No
+CrossPoint script is bypassed. See [DOCKER_INSTALL.md](DOCKER_INSTALL.md#first-clean-on-an-empty-platformio-cache)
+for the cold-cache failure and retained initialization logs.
+
+It also prepares `penv/.espidf-5.5.5` with the separate hashed application Python
+lock before CrossPoint compilation. This environment must not reuse IDF5.4's
+Python packages or the outer PlatformIO dependency constraints. Interpreter,
+dependency and import probes run before upstream cache metadata is recorded.
+See [application dependencies](DOCKER_INSTALL.md#application-esp-idf-python-dependencies).
+
 Host checks after preparing dependencies:
 
 ```sh
@@ -49,3 +64,12 @@ Host checks after preparing dependencies:
 ```
 
 These tests use mocks for hardware and selected real-source function extraction. They cannot measure battery rails, wake timing, e-paper state, or the complete SDK call-chain stack high-water.
+
+
+## Recorded hardware validation
+
+The owner reports 9/9 physical tests and Preserve Data/flash/protected-readback
+verification PASS for [one exact Docker-generated v1.1.0 image](VALIDATION.md).
+The report does not automatically validate a native or future Docker rebuild.
+Build-time hardware flags stay false; later hash-specific owner evidence is
+recorded separately. The previous source-only distribution and OTA policy remain.

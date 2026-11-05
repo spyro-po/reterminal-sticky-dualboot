@@ -1,5 +1,12 @@
 # Update / Preserve Data
 
+Docker builders must use the explicit backup/layout gate in [DOCKER_INSTALL.md](DOCKER_INSTALL.md). Windows commands and readback comparison are in [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md).
+
+The owner reports successful Preserve Data installation, flash/protected-data
+verification and 9/9 hardware tests for the [exact v1.1.0 image](VALIDATION.md).
+This does not validate future rebuilds or other devices; repeat the safety
+checks below for each installation.
+
 Only for a device already using the exact **protected-reference** table. This is not a factory-device migration. The current table must contain `app1` subtype **test (0x20)** at `0x690000`, private `cp_nvs` and `bootstate`, and all vendor data extents unchanged. A valid MD5 alone does not prove layout compatibility.
 
 Build a new matched pair using [BUILD.md](BUILD.md). There is no public precompiled CrossPoint asset in this source release. Retain your last verified working **pair** for rollback. Do not install the bootloader alone.
@@ -7,8 +14,12 @@ Build a new matched pair using [BUILD.md](BUILD.md). There is no public precompi
 Use esptool **4.12.0** and the path/port variables from [INSTALL.md](INSTALL.md). Establish ROM access, inspect `get_security_info` and `flash_id`, and stop if the device is not the supported unrestricted 32 MiB model. Keep the chip in ROM/stub with `--after no_reset` until readback is finished so application writes cannot change data between captures.
 
 ```sh
+set -eu
+umask 077
+test ! -e /private/path/sticky-before.bin
+test ! -e /private/path/sticky-before.bin.sha256
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset read_flash 0x0 0x2000000 /private/path/sticky-before.bin
-sha256sum /private/path/sticky-before.bin
+sha256sum /private/path/sticky-before.bin > /private/path/sticky-before.bin.sha256
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset verify_flash 0x0 /private/path/sticky-before.bin
 .venv/bin/python scripts/preflight.py --bundle .local/out/build1/update --backup /private/path/sticky-before.bin
 ```
@@ -18,8 +29,11 @@ The offline preflight checks both manifest hashes, image checksums and appended 
 After a successful full-backup preflight, write **exactly two segments**, with stable USB power:
 
 ```sh
+set -eu
+.venv/bin/python scripts/preflight.py --bundle .local/out/build1/update --backup /private/path/sticky-before.bin
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 .local/out/build1/update/bootloader.bin 0x690000 .local/out/build1/update/crosspoint.bin
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset verify_flash 0x0 .local/out/build1/update/bootloader.bin 0x690000 .local/out/build1/update/crosspoint.bin
+test ! -e /private/path/sticky-after-before-boot.bin
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset read_flash 0x0 0x2000000 /private/path/sticky-after-before-boot.bin
 .venv/bin/python scripts/preflight.py --bundle .local/out/build1/update --backup /private/path/sticky-before.bin --after /private/path/sticky-after-before-boot.bin
 ```

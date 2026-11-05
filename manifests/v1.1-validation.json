@@ -1,0 +1,189 @@
+{
+  "version": "1.1.0",
+  "phase": "owner-approved source-only v1.1.0 release; exact-build hardware validation PASS9/9",
+  "baseline": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
+  "runtime_sources": "UNCHANGED: firmware, crosspoint integration, patches, partitions and v1.0.0 dependency lock",
+  "python_offline_tests": "PASS:72 unittest cases plus8 forbidden PlatformIO targets",
+  "locked_python_environments": "PASS: clean installs and pip check; all exact package pins verified",
+  "docker_configuration": "PASS: digest/COPY/context policy audit; shell syntax and fake-Docker isolation tests",
+  "docker_build_local": "UNAVAILABLE: no Docker daemon/socket; unprivileged user namespaces are denied",
+  "docker_image_execution_local": "NOT_RUN",
+  "ci_docker_smoke": "PASS at77b9e65: GitHub Actions41654498217, Docker image build and network-disabled list smoke; not a firmware build",
+  "native_pipeline_reproducibility": "PASS: two clean application compilations and fresh loader projects under the locked Python environments; both segments byte-identical",
+  "actual_existing_bundle_export": "PASS: v1.0.0 local software-test pair and factory-derived image; all factory extents unchanged",
+  "preserve_data_simulation": "PASS: synthetic canaries and factory-derived image, not a new device backup/read",
+  "windows_execution": "NOT_RUN; PowerShell commands documented with exit-code guards",
+  "other_containers_modified": false,
+  "firmware_redistribution": "FORBIDDEN under current policy; no BIN, vendor or complete Flash artifacts in source/CI uploads",
+  "independent_reviews": "PASS: four initial read-only axes; Linux Docker instruction-path P2 fixed and targeted documentation follow-up passed",
+  "public_release": "OWNER_APPROVED: source-only v1.1.0; publication identifiers are recorded by the GitHub merge, annotated tag and Release",
+  "native_all_existing_gates": "PASS: final ELF/map/NVS/WiFi callback audit, IDF/table generators, C/C++ policy/menu/journal fault tests, flash isolation and SHA pins",
+  "full_local_export_and_verify": "PASS: six-file bundle exported only after validation; fresh and Preserve Data verification passed using a factory-derived image, not a device backup",
+  "original_working_inputs": "PASS: baseline source/Stage4pair/vendor hashes unchanged",
+  "upstream_metadata_check": "PASS: observed CP2.0.0 / Seeedash1.2.0; no newer version labels; no BIN fetch or stable changes",
+  "apt_snapshot_fix": {
+    "root_cause": "Pinned base includes security packages; prior main-only APT sources hid matching dependency versions",
+    "base_amd64_created": "2026-10-28T02:03:58.440469373Z",
+    "snapshot": "20261102T000000Z",
+    "streams": [
+      "bookworm",
+      "bookworm-updates",
+      "bookworm-security"
+    ],
+    "metadata_check": "PASS: digest-verified base layers and all three official snapshot indexes; matching libssl/perl package versions found in security",
+    "docker_build_run": "NOT_RUN: local daemon/socket unavailable",
+    "firmware_rebuild": "NOT_RUN for this APT-only fix; previous native evidence applies to c8b3e20",
+    "forbidden_workarounds": false,
+    "new_hardware_tests": false,
+    "offline_tests": "PASS: complete signed streams; missing suites, mixed/live sources, signature and dependency bypasses rejected"
+  },
+  "idf_tools_path_fix": {
+    "baseline": "a460a4f",
+    "owner_test": "APT phase now passes; image failed copying constraints because tools root was absent",
+    "root_cause": "Pinned IDF5.4 expand_tools_arg filters TOOL@VERSION against bare names, producing an empty successful installation",
+    "versioned_selector_reproduction": "PASS: actual pinned script returned0 with empty tool list and no directory",
+    "bare_tool_install": "PASS: actual pinned SDK installed xtensa-esp-elf for esp32s3 in an isolated host tools root",
+    "compiler": "PASS: exact esp-14.2.0_20241119 compiler path and version",
+    "python_dependencies": "PASS: actual check with locked environment and constraints; build and runtime-metadata layouts",
+    "docker_build_run": "UNAVAILABLE locally: no daemon/socket; full image not verified",
+    "firmware_rebuild": "NOT_RUN for this tooling-only fix; no firmware/partition/compatibility/version pins changed",
+    "new_hardware_tests": false
+  },
+  "build_process_diagnostics": {
+    "owner_report": "Tools image built on Ubuntu; runtime failed. Inspected clean SUCCESS log was from the host repository, not the disposable container workspace.",
+    "confirmed_defect": "Fixed filenames and container-private logs made evidence ambiguous and unavailable after --rm; exit-code comparison itself was correct.",
+    "original_platformio_failure": "UNKNOWN: no correlated original container return code or log survives; no success-text override or guessed root cause.",
+    "change": "Unique per-run output-volume diagnostics; raw merged output and structured real return codes/signals; bounded failure tails; exclusive filenames.",
+    "regressions": "Real child success/nonzero/signal exits, stdout/stderr tails, nested driver failure, spawn errors, stale/duplicate logs, permissions and retained failed-build diagnostics.",
+    "native_clean": "PASS: actual pinned PlatformIO clean returned0 under the locked host environment; does not reproduce Docker failure.",
+    "docker_execution_local": "NOT_RUN: daemon/socket unavailable",
+    "firmware_rebuild": "NOT_RUN: firmware, bootloader, partition sources and pins unchanged",
+    "new_hardware_tests": false
+  },
+  "platformio_first_clean_initialization": {
+    "baseline": "7bd35ea",
+    "owner_report": "Tools image builds and persistent logs work; first clean fails with Path(None) in unchanged CrossPoint patch_pioarduino_cache.py.",
+    "root_cause": "PlatformIO clean runs SCons pre-scripts and returns before install_project_env_dependencies; global platform install leaves Arduino/IDF frameworks optional and absent in fresh installed-package cache.",
+    "cold_cache_negative_control": "PASS: actual pinned PlatformIO reproduced the same TypeError and returncode1; three framework packages absent before initialization.",
+    "cold_cache_after_fix": "PASS: actual environment-scoped pkg install downloaded pinned frameworks and libraries, prerequisite validation passed, clean returned0.",
+    "same_cache_repeat": "PASS: actual repeated project initialization and clean returned0.",
+    "previously_populated_cache": "PASS: actual project initialization and clean returned0.",
+    "regressions": "10 new offline tests: cold/warm orchestration, package-install errors, incomplete/mismatched framework metadata, altered source URLs and ESP32-S3 SDK file requirements.",
+    "diagnostics": "UNCHANGED: unique output-volume logs and real return-code status; adds per-pass dependencies logs.",
+    "source_integrity": "PASS: prepared CrossPoint still equals the approved patch; original integration/firmware/bootloader/partitions/version locks unchanged.",
+    "licenses": "Original host-only orchestration/check code under scoped MIT; no new dependency or copied upstream code.",
+    "docker_execution_local": "NOT_RUN: Docker daemon/socket unavailable; owner Ubuntu retest required.",
+    "firmware_compilation": "NOT_RUN for this initialization-only fix; previous reproducibility results remain baseline evidence.",
+    "new_hardware_tests": false
+  },
+  "application_idf_python_initialization": {
+    "baseline": "4e15b17",
+    "root_cause": "Application-IDF uv installer inherits outer PlatformIO cryptography50.0.2 constraint conflicting with pioarduino cryptography~=44.0.0; upstream ignores install-action failure and writes environment marker, then CMake cannot import idf_component_manager.",
+    "negative_control": "PASS: original uv invocation with inherited outer lock returns1 with an explicit cryptography constraint conflict.",
+    "locked_scope": "59 exact hashed packages from pinned SDK core requirements plus pinned pioarduino Python requirements; distinct from IDF5.4 and outer PlatformIO locks.",
+    "application_versions": {
+      "idf-component-manager": "2.4.11",
+      "esp-idf-kconfig": "3.7.0",
+      "cryptography": "44.0.3",
+      "pyparsing": "3.2.5"
+    },
+    "cold_and_warm_cache": "PASS: actual application-interpreter imports, exact package inventory and uv dependency checks; upstream-compatible marker only after verification.",
+    "incomplete_cache": "PASS: remove component manager as a negative control; probe rejects incomplete inventory; bootstrap restores package and all checks pass.",
+    "interpreter_isolation": "PASS: prefix checked before install; explicit uv --python; original bootloader and outer locks unchanged; existing IDF5.4 retains component manager2.5.2/Kconfig2.5.4.",
+    "regressions": "9 new offline tests plus cold/warm orchestration extension, including real wrong/empty interpreter probes, hashes, failed installs/imports and symlink/skip-marker rejection.",
+    "git_diagnostic": "PASS: pinned SDK CMake submodule probe on archive without Git metadata emits fatal:not-a-git-repository while CMake returns0; exact source of owner excerpt is not proven.",
+    "native_crosspoint_build": "PASS: full native framework and CrossPoint compilation returned0; final ELF/map/NVS/write-guard, image and exact partition-table audits passed; application interpreter inventory/imports rechecked after build.",
+    "docker_execution_local": "NOT_RUN: no daemon/socket; owner Ubuntu retest required.",
+    "new_hardware_tests": false,
+    "firmware_sources_and_versions": "UNCHANGED; custom Stage4 bootloader not rebuilt; no merged firmware image or published firmware artifacts.",
+    "missing_packages_negative_control": [
+      "cryptography",
+      "pyparsing",
+      "idf_component_manager",
+      "esp_idf_kconfig"
+    ]
+  },
+  "historical_native_artifact_sha256": {
+    "bootloader.bin": "1bf18960be959d423eade349d110e47ac21ae75b1c8bc6dce8090a751f991edd",
+    "crosspoint.bin": "d2b844ddf71dddd6696c85db89ec122517489dc140b4d6fe0a88c694a3b60b00",
+    "fresh-32MiB.bin": "269457f131624ab0bbfbaf1f107da237e4be838079503f0212043cb5716b77f3"
+  },
+  "final_audit": {
+    "date": "2026-11-05",
+    "runtime_build_baseline": "77b9e658e3f8d9b6a504c58bf4d37d6fb1ef9e32",
+    "recommendation": "GO for owner-approved source-only v1.1.0; NO-GO for firmware BIN/prebuilt-image distribution.",
+    "owner_ubuntu_test": {
+      "docker_build": "PASS",
+      "reproducibility_check": "PASS",
+      "artifact_verification": "PASS",
+      "combination": "cp-2.0.0-seeedash-1.2.0"
+    },
+    "independent_actual_artifact_verification": "PASS: both supplied six-file bundles; matching hashes, code/body pin, exact table and six protected factory extents.",
+    "artifact_sha256": {
+      "fresh-32MiB.bin": "e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073",
+      "bootloader.bin": "9e4cd3138348984dab07a1eca15fd231e647d8d6ba9fd8e298d81708445a3776",
+      "crosspoint.bin": "88e35b121fa1df7ced7721a816b33443cfdebeb8bc4ee4e5e8b6f1940d0f88ef"
+    },
+    "erase_ranges_exclusive": {
+      "bootloader": [
+        "0x0",
+        "0x6000"
+      ],
+      "crosspoint": [
+        "0x690000",
+        "0xba2000"
+      ]
+    },
+    "preserve_data": "PASS: actual pair plus synthetic protected-data canaries; no real device backup or device update performed.",
+    "docs_negative_controls": "PASS: original Recovery snippet continued to flasher stub after download failure; corrected Recovery/Fresh/Update snippets stop before stub on invalid inputs; Bash syntax checked.",
+    "corrections": "Fail-fast native shell blocks, explicit vendor hash/size checks, saved backup digests and no-overwrite backup/readback guards; proposed notes and status documentation.",
+    "license_provenance": "PASS: pinned CrossPoint and Reader+ MIT copies match upstream; vendor release folder contains manifest/BIN without artifact-specific license; source-only policy retained.",
+    "public_files": "PASS: current Git source and history contain no firmware/private artifacts; existing v1.0.0 Release assets are source archive, SHA256SUMS.txt and RELEASE_NOTES.md.",
+    "warnings": [
+      "Windows installation not executed",
+      "Paired writes not power-fail atomic",
+      "All OTA/resource updates forbidden",
+      "No cross-host reproducibility promise",
+      "Binary redistribution not cleared",
+      "Future rebuilds and other devices not hardware validated",
+      "Battery emergency Up+Reset power condition not specified; long-term sleep/wake stress not reported",
+      "Fresh Install/factory Recovery hardware execution not reported"
+    ],
+    "docker_reexecuted_by_reviewer": false,
+    "details": "docs/V1.1_FINAL_AUDIT.md",
+    "persisted_successful_run_evidence": [
+      {
+        "run_id": "20261103T143304Z-5tpryp29",
+        "recorded_processes": 24,
+        "all_returncodes_zero": true
+      },
+      {
+        "run_id": "20261103T194418Z-ff8inki4",
+        "recorded_processes": 24,
+        "all_returncodes_zero": true
+      }
+    ],
+    "owner_reported_hardware_validation": {
+      "status": "PASS",
+      "report": "manifests/v1.1-hardware-validation.json",
+      "fresh_image_sha256": "e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073",
+      "hardware_tests_passed": 9,
+      "hardware_tests_total": 9,
+      "scope": "One physical device, exact artifact and reported conditions only; future outputs remain untested by default."
+    },
+    "reviewer_hardware_tests_performed": false,
+    "reviewer_device_operations": false
+  },
+  "owner_reported_hardware_validation": {
+    "status": "PASS",
+    "report": "manifests/v1.1-hardware-validation.json",
+    "fresh_image_sha256": "e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073",
+    "hardware_tests_passed": 9,
+    "hardware_tests_total": 9,
+    "scope": "One physical device, exact artifact and reported conditions only; future outputs remain untested by default."
+  },
+  "reviewer_hardware_tests_performed": false,
+  "hardware_evidence_scope": "Historical new_hardware_tests=false fields describe reviewer/stage activity. Latest owner hardware results are in owner_reported_hardware_validation and its separate exact-build report.",
+  "reviewer_new_hardware_tests": false,
+  "reviewer_device_flash_operations": false
+}

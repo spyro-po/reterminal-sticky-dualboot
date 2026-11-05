@@ -12,6 +12,9 @@ import sys
 from common import ROOT,LOCK,require,sha,image,partition_table,parse_table,validate_pair,write_new
 from prepare_crosspoint import prepare,CHECKOUT
 from elf_audit import crosspoint_checks
+from process_log import new_session,run_logged
+from pio_dependencies import initialize_project
+from app_idf_env import initialize_app_idf
 
 
 def environment():
@@ -23,12 +26,7 @@ def environment():
 
 
 def run(command,cwd,log,env):
-    path=ROOT/'.local/logs'/log
-    path.parent.mkdir(parents=True,exist_ok=True)
-    with path.open('w') as stream:
-        result=subprocess.run([str(a) for a in command],cwd=cwd,env=env,
-                              stdout=stream,stderr=subprocess.STDOUT)
-    require(result.returncode==0,'Command failed; inspect private log '+str(path.relative_to(ROOT)))
+    run_logged(command,cwd,log,env,env['STICKY_BUILD_LOG_DIR'])
 
 
 def pio_command():
@@ -59,10 +57,15 @@ def prepare_platform(command,env):
 
 def build(args):
     require(re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,31}',args.label),'Invalid local output label')
-    checkout=prepare()
     env=environment()
+    if not env.get('STICKY_BUILD_LOG_DIR'):
+        env['STICKY_BUILD_LOG_DIR']=str(new_session(ROOT/'.local/logs'))
+    print('Private build diagnostics: '+env['STICKY_BUILD_LOG_DIR'],flush=True)
+    checkout=prepare()
     command=pio_command()
     prepare_platform(command,env)
+    initialize_project(command,checkout,args.label,env,run)
+    initialize_app_idf(checkout,args.label,env,run)
     if args.clean_app:
         run(command+['run','-e','sticky-dualboot-test','-t','clean'],checkout,args.label+'-clean.log',env)
     run(command+['run','-e','sticky-dualboot-test'],checkout,args.label+'-crosspoint.log',env)
