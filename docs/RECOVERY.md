@@ -13,7 +13,9 @@ Commands below use esptool **4.12.0**, `ESP_PY` and `STICKY_PORT` as explained i
 Use a verified **33554432-byte backup from this chip**, stored privately with its SHA-256. A different device's backup can contain different calibration and secrets.
 
 ```sh
-sha256sum /private/path/sticky-before.bin
+set -eu
+sha256sum --check /private/path/sticky-before.bin.sha256
+test "$(wc -c < /private/path/sticky-before.bin)" -eq 33554432
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 /private/path/sticky-before.bin
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset verify_flash 0x0 /private/path/sticky-before.bin
 ```
@@ -25,10 +27,10 @@ Reset after verification. This restores bootloader, table, applications, NVS, PH
 **Destructive:** this restores factory firmware and defaults, not personal files or credentials. A complete erase also clears private Dual Boot state and the last 256 KiB coredump area absent from the vendor download.
 
 ```sh
+set -eu
 .venv/bin/python scripts/fetch_seeedash.py
-sha256sum .local/vendor/seeedash-1.2.0.bin
-# Must be: 5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2
-# Exact vendor file length: 33292288 bytes (0x1fc0000).
+printf '5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2  .local/vendor/seeedash-1.2.0.bin\n' | sha256sum --check -
+test "$(wc -c < .local/vendor/seeedash-1.2.0.bin)" -eq 33292288
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset erase_flash
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 .local/vendor/seeedash-1.2.0.bin
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset verify_flash 0x0 .local/vendor/seeedash-1.2.0.bin

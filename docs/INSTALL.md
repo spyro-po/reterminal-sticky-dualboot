@@ -11,18 +11,25 @@ Build locally as [BUILD.md](BUILD.md) describes, including the validated officia
 The manual commands below use **esptool 4.12.0**, whose syntax uses underscores. Install it in a separate environment so the firmware builder's toolchain is unaffected. Set `ESP_PY` to that environment's Python and `STICKY_PORT` to the actual device port. esptool 5 has different command spelling; do not blindly mix versions.
 
 ```sh
+set -eu
+umask 077
 export ESP_PY=/path/to/esptool-4.12-env/bin/python
 export STICKY_PORT=/dev/ttyACM0
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" get_security_info
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" flash_id
+test ! -e /private/path/sticky-before.bin
+test ! -e /private/path/sticky-before.bin.sha256
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset read_flash 0x0 0x2000000 /private/path/sticky-before.bin
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset verify_flash 0x0 /private/path/sticky-before.bin
-sha256sum /private/path/sticky-before.bin
+sha256sum /private/path/sticky-before.bin > /private/path/sticky-before.bin.sha256
 ```
 
 Only after checking that backup and accepting data loss, with stable USB power:
 
 ```sh
+set -eu
+(cd .local/out/build1 && sha256sum --check fresh-32MiB.sha256)
+test "$(wc -c < .local/out/build1/fresh-32MiB.bin)" -eq 33554432
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset erase_flash
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 .local/out/build1/fresh-32MiB.bin
 "$ESP_PY" -m esptool --chip esp32s3 --port "$STICKY_PORT" --after no_reset verify_flash 0x0 .local/out/build1/fresh-32MiB.bin

@@ -1,5 +1,12 @@
 # Validation record and limits
 
+## v1.1.0 Docker builder audit
+
+The [final audit](V1.1_FINAL_AUDIT.md) records the owner-reported successful Ubuntu
+Docker/reproducibility/verification run and independent checks of its actual
+local bundles. Windows execution and new firmware hardware tests remain pending.
+The native v1.0.0 evidence below is historical and has different artifact hashes.
+
 ## Hardware evidence
 
 `manifests/hardware-test-report.json` records the owner's Stage 4 observations on one physical Sticky: CrossPoint default/EPUB reading, Seeedash menu switching, plain physical Reset return, Up+Reset with USB, battery menu switching, and successful Stage 4 installation. The original tested segment identities are retained in `manifests/stage4-validated-artifacts.json` for provenance, not as publicly bundled binaries.

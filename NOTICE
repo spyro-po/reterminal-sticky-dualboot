@@ -1,4 +1,6 @@
-reTerminal Sticky Dual Boot v1.0.0
+reTerminal Sticky Dual Boot
+
+Stage 4 runtime introduced in v1.0.0; local Docker tooling added in v1.1.0.
 
 CrossPoint Reader: Copyright (c) 2025 CrossPoint Reader organization; MIT.
 FreeInk SDK: Copyright (c) 2026 FreeInk; MIT, with dependency notices.

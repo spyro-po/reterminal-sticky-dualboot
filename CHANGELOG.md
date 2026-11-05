@@ -2,6 +2,8 @@
 
 ## v1.1.0 — Unreleased
 
+- Complete final artifact/layout audit of the owner-tested Ubuntu Docker output; document source-only release readiness, retain Windows/hardware limits and harden manual installation/recovery commands against failed checks and backup overwrite.
+
 - Bootstrap and verify the application ESP-IDF5.5.5 Python environment with a separate fully pinned, hashed package lock; keep PlatformIO and bootloader IDF5.4 environments separate and reject missing imports before compilation.
 
 - Initialize the pinned PlatformIO environment before the first clean; check framework source metadata and ESP32-S3 SDK files on cold and warm caches without bypassing CrossPoint pre-scripts.

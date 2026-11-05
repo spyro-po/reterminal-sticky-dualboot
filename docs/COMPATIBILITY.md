@@ -4,7 +4,7 @@
 
 | ID | Channel | CrossPoint | Seeedash | Loader / layout | Hardware evidence |
 | --- | --- | --- | --- | --- | --- |
-| cp-2.0.0-seeedash-1.2.0 | stable | 2.0.0, e8299b5f126817282939059d6505f90429489276 | 1.2.0 | Stage 4, STKY-BOOT-V1 / protected-reference-32m | Owner-reported Stage 4 tests on one device; newly generated and Docker-built artifacts are untested |
+| cp-2.0.0-seeedash-1.2.0 | stable | 2.0.0, e8299b5f126817282939059d6505f90429489276 | 1.2.0 | Stage 4, STKY-BOOT-V1 / protected-reference-32m | Owner-reported Stage 4 tests on one device; newly generated and Docker-built firmware is not hardware-tested |
 
 Seeedash's approved full-image SHA-256 is `5cd55031ddee26cf32ed9e01dd89ed8d820bdbfe752d0140b136177fab26a2a2`. The CSV/table, eight-file patch, boot policy/entry/header/config and build profile have integrity pins. Six factory-extent hashes allow fresh-image verification without publishing or bundling a separate factory BIN. All original factory data extents must match.
 

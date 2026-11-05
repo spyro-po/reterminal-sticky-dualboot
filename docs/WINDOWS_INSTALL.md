@@ -71,9 +71,12 @@ function Invoke-StickyEsp {
 }
 Invoke-StickyEsp get_security_info
 Invoke-StickyEsp flash_id
+if (Test-Path -LiteralPath C:\Sticky\before-32MiB.bin) { throw 'Backup exists: choose a new private filename' }
+if (Test-Path -LiteralPath C:\Sticky\before-32MiB.bin.sha256) { throw 'Backup digest exists: choose a new private filename' }
 Invoke-StickyEsp --after no_reset read_flash 0x0 0x2000000 C:\Sticky\before-32MiB.bin
 Invoke-StickyEsp --after no_reset verify_flash 0x0 C:\Sticky\before-32MiB.bin
-Get-FileHash -Algorithm SHA256 C:\Sticky\before-32MiB.bin
+$BackupSha256 = (Get-FileHash -Algorithm SHA256 C:\Sticky\before-32MiB.bin).Hash.ToLowerInvariant()
+Set-Content -LiteralPath C:\Sticky\before-32MiB.bin.sha256 -Value $BackupSha256 -NoNewline
 ```
 
 Check every command's exit code (`$LASTEXITCODE` must be 0) before continuing. Confirm 32 MiB Flash, unrestricted ROM download and no Secure Boot/encryption. Stop on any mismatch. Do not burn eFuses or use `--force`. Keep the private backup off GitHub. Use stable USB power and a data cable. Close serial monitors and other programs holding the COM port.
@@ -104,6 +107,7 @@ Stop unless preflight succeeds. The flag alone does not confirm compatibility. T
 ```powershell
 Invoke-StickyEsp --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 "$Bundle\bootloader.bin" 0x690000 "$Bundle\crosspoint.bin"
 Invoke-StickyEsp --after no_reset verify_flash 0x0 "$Bundle\bootloader.bin" 0x690000 "$Bundle\crosspoint.bin"
+if (Test-Path -LiteralPath C:\Sticky\after-before-boot.bin) { throw 'Readback exists: choose a new private filename' }
 Invoke-StickyEsp --after no_reset read_flash 0x0 0x2000000 C:\Sticky\after-before-boot.bin
 ```
 
@@ -120,6 +124,10 @@ This validates the exact predicted sector writes and unchanged protected bytes; 
 For an exact restore, use a complete verified backup from **this chip** at offset 0x0 and verify it. A Dual Boot backup restores Dual Boot; it does not restore the factory layout.
 
 ```powershell
+$ExpectedBackupSha256 = (Get-Content -Raw -LiteralPath C:\Sticky\before-32MiB.bin.sha256).Trim()
+if ($ExpectedBackupSha256 -notmatch '^[0-9a-f]{64}$') { throw 'Invalid trusted backup digest' }
+if ((Get-FileHash -Algorithm SHA256 C:\Sticky\before-32MiB.bin).Hash.ToLowerInvariant() -ne $ExpectedBackupSha256) { throw 'Backup hash mismatch: STOP' }
+if ((Get-Item C:\Sticky\before-32MiB.bin).Length -ne 33554432) { throw 'Backup size mismatch: STOP' }
 Invoke-StickyEsp --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 C:\Sticky\before-32MiB.bin
 Invoke-StickyEsp --after no_reset verify_flash 0x0 C:\Sticky\before-32MiB.bin
 ```
@@ -139,4 +147,4 @@ Invoke-StickyEsp --after no_reset verify_flash 0x0 C:\Sticky\seeedash-1.2.0.bin
 
 Stop on any command/hash failure. Reset after verification and provision Seeedash again. Full erase clears the last 256 KiB absent from the vendor file. Up is not the ROM BOOT strap; see [RECOVERY.md](RECOVERY.md) if auto-download fails. Do not guess board pads.
 
-No new Windows, Docker or hardware installation is claimed verified by these instructions. Keep all standard OTA forbidden. Up+Reset on battery and broad sleep/wake behavior remain unconfirmed.
+Windows installation has not been executed. The owner reports successful Ubuntu Docker build/reproducibility/verification; see the [final audit](V1.1_FINAL_AUDIT.md). No new hardware installation is claimed. Keep all standard OTA forbidden. Up+Reset on battery and broad sleep/wake behavior remain unconfirmed.

@@ -2,6 +2,12 @@
 
 This development version wraps the existing Stage 4 build and verification pipeline. It does **not** flash devices. The currently released version remains v1.0.0 until the owner approves a new release.
 
+Final validation: the owner reports full Ubuntu Docker build, repeat-build
+comparison and artifact verification PASS. Both supplied local bundles passed
+the [final audit](V1.1_FINAL_AUDIT.md). The troubleshooting sections below record
+earlier failures and their fixes. Windows execution and new firmware hardware
+tests remain unverified; no local reviewer Docker execution is claimed.
+
 ## Requirements
 
 Use Linux with a working Docker Engine, or Windows 11 with Docker Desktop's **Linux containers / WSL2** backend. The launcher runs in Bash on Linux or WSL2. No host ESP-IDF, PlatformIO or compiler installation is needed. The initial supported container platform is **linux/amd64**; ARM/emulated hosts are not validated. Allow at least 20 GiB free disk space, several GiB RAM and a reliable network connection. Download/build time depends on network and CPU and can be substantial.
@@ -55,7 +61,7 @@ See [ESP-IDF5.4 tool documentation](https://docs.espressif.com/projects/esp-idf/
 
 The remaining Dockerfile order was reviewed: Docker `COPY` creates lock/source destination directories, venv creation precedes SDK tool invocations, Git checkout/pin checks precede installation, compiler/constraints checks precede the final source audit, and privilege drop occurs last. The entrypoint checks immutable prerequisites and creates its writable workspace/metadata/helper parents before copying or linking. Static regressions reject broken paths and reordered steps.
 
-Real tool installation and Python dependency checks passed in isolated host directories, including the runtime symlink/metadata layout. The owner subsequently reported a successful tools-image build on Ubuntu, followed by a runtime build failure. A Docker daemon is still unavailable in the preparation environment; no local container execution or new hardware test is claimed.
+Real tool installation and Python dependency checks passed in isolated host directories, including the runtime symlink/metadata layout. The owner subsequently confirmed the complete Ubuntu build after the runtime fixes below. A Docker daemon is still unavailable in the preparation environment; no local reviewer container execution or new hardware test is claimed.
 
 ## Build failure diagnostics
 
@@ -267,10 +273,12 @@ sticky_esptool() {
 sticky_esptool get_security_info
 sticky_esptool flash_id
 BEFORE="$PRIVATE/before-32MiB.bin"
+test ! -e "$BEFORE"  # Choose a new private filename if this exists.
+test ! -e "$BEFORE.sha256"
 sticky_esptool --after no_reset read_flash 0x0 0x2000000 "$BEFORE"
 test "$(wc -c < "$BEFORE")" -eq 33554432
 sticky_esptool --after no_reset verify_flash 0x0 "$BEFORE"
-sha256sum "$BEFORE"
+sha256sum "$BEFORE" > "$BEFORE.sha256"
 ./sticky-installer.sh verify --mode fresh
 (cd "$BUNDLE" && sha256sum -c SHA256SUMS.txt)
 ```
@@ -301,6 +309,7 @@ set -e
 sticky_esptool --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 "$BUNDLE/bootloader.bin" 0x690000 "$BUNDLE/crosspoint.bin"
 sticky_esptool --after no_reset verify_flash 0x0 "$BUNDLE/bootloader.bin" 0x690000 "$BUNDLE/crosspoint.bin"
 AFTER="$PRIVATE/after-before-boot.bin"
+test ! -e "$AFTER"
 sticky_esptool --after no_reset read_flash 0x0 0x2000000 "$AFTER"
 docker run --rm --platform linux/amd64 --network none --user "$(id -u):$(id -g)" --cap-drop ALL --security-opt no-new-privileges --mount "type=bind,src=$BUNDLE,dst=/bundle,readonly" --mount "type=bind,src=$BEFORE,dst=/before.bin,readonly" --mount "type=bind,src=$AFTER,dst=/after.bin,readonly" --entrypoint /opt/sticky/python/bin/python reterminal-sticky-dualboot-builder:1.1.0 /opt/sticky/source/scripts/preflight.py --bundle /bundle --backup /before.bin --after /after.bin
 ```
@@ -313,6 +322,8 @@ For exact-state recovery, write the verified full backup from **this chip** at0x
 
 ```sh
 set -e
+sha256sum --check "$BEFORE.sha256"
+test "$(wc -c < "$BEFORE")" -eq 33554432
 sticky_esptool --after no_reset write_flash --flash_mode keep --flash_freq keep --flash_size keep 0x0 "$BEFORE"
 sticky_esptool --after no_reset verify_flash 0x0 "$BEFORE"
 ```

@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "phase": "host-validation-complete; owner tools-image/first-clean pass; application-IDF bootstrap fix awaits Ubuntu container retest",
+  "phase": "final-audit-pass; owner Ubuntu Docker build/reproducibility/verification PASS; source-only release proposed, awaiting approval",
   "baseline": "835d09d699fa0ce174ea69fc15fcaf456bf2b868",
   "runtime_sources": "UNCHANGED: firmware, crosspoint integration, patches, partitions and v1.0.0 dependency lock",
   "python_offline_tests": "PASS:69 unittest cases plus8 forbidden PlatformIO targets",
@@ -8,7 +8,7 @@
   "docker_configuration": "PASS: digest/COPY/context policy audit; shell syntax and fake-Docker isolation tests",
   "docker_build_local": "UNAVAILABLE: no Docker daemon/socket; unprivileged user namespaces are denied",
   "docker_image_execution_local": "NOT_RUN",
-  "ci_docker_smoke": "PENDING: tools-image build/list job is configured, no firmware download in CI",
+  "ci_docker_smoke": "PASS at77b9e65: GitHub Actions41654498217, Docker image build and network-disabled list smoke; not a firmware build",
   "native_pipeline_reproducibility": "PASS: two clean application compilations and fresh loader projects under the locked Python environments; both segments byte-identical",
   "actual_existing_bundle_export": "PASS: v1.0.0 local software-test pair and factory-derived image; all factory extents unchanged",
   "preserve_data_simulation": "PASS: synthetic canaries and factory-derived image, not a new device backup/read",
@@ -23,11 +23,6 @@
   "full_local_export_and_verify": "PASS: six-file bundle exported only after validation; fresh and Preserve Data verification passed using a factory-derived image, not a device backup",
   "original_working_inputs": "PASS: baseline source/Stage4pair/vendor hashes unchanged",
   "upstream_metadata_check": "PASS: observed CP2.0.0 / Seeedash1.2.0; no newer version labels; no BIN fetch or stable changes",
-  "local_artifact_sha256": {
-    "bootloader.bin": "1bf18960be959d423eade349d110e47ac21ae75b1c8bc6dce8090a751f991edd",
-    "crosspoint.bin": "d2b844ddf71dddd6696c85db89ec122517489dc140b4d6fe0a88c694a3b60b00",
-    "fresh-32MiB.bin": "269457f131624ab0bbfbaf1f107da237e4be838079503f0212043cb5716b77f3"
-  },
   "apt_snapshot_fix": {
     "root_cause": "Pinned base includes security packages; prior main-only APT sources hid matching dependency versions",
     "base_amd64_created": "2026-10-28T02:03:58.440469373Z",
@@ -108,6 +103,68 @@
       "pyparsing",
       "idf_component_manager",
       "esp_idf_kconfig"
+    ]
+  },
+  "historical_native_artifact_sha256": {
+    "bootloader.bin": "1bf18960be959d423eade349d110e47ac21ae75b1c8bc6dce8090a751f991edd",
+    "crosspoint.bin": "d2b844ddf71dddd6696c85db89ec122517489dc140b4d6fe0a88c694a3b60b00",
+    "fresh-32MiB.bin": "269457f131624ab0bbfbaf1f107da237e4be838079503f0212043cb5716b77f3"
+  },
+  "final_audit": {
+    "date": "2026-11-05",
+    "runtime_build_baseline": "77b9e658e3f8d9b6a504c58bf4d37d6fb1ef9e32",
+    "recommendation": "GO for source-only v1.1.0 builder release after owner approval; NO-GO for firmware BIN/prebuilt image distribution.",
+    "owner_ubuntu_test": {
+      "docker_build": "PASS",
+      "reproducibility_check": "PASS",
+      "artifact_verification": "PASS",
+      "combination": "cp-2.0.0-seeedash-1.2.0"
+    },
+    "independent_actual_artifact_verification": "PASS: both supplied six-file bundles; matching hashes, code/body pin, exact table and six protected factory extents.",
+    "artifact_sha256": {
+      "fresh-32MiB.bin": "e4dcb8b45d07cdc367ef03517c19c4f59aab839aae4041dfcd3c50ad4c43f073",
+      "bootloader.bin": "9e4cd3138348984dab07a1eca15fd231e647d8d6ba9fd8e298d81708445a3776",
+      "crosspoint.bin": "88e35b121fa1df7ced7721a816b33443cfdebeb8bc4ee4e5e8b6f1940d0f88ef"
+    },
+    "erase_ranges_exclusive": {
+      "bootloader": [
+        "0x0",
+        "0x6000"
+      ],
+      "crosspoint": [
+        "0x690000",
+        "0xba2000"
+      ]
+    },
+    "preserve_data": "PASS: actual pair plus synthetic protected-data canaries; no real device backup or device update performed.",
+    "docs_negative_controls": "PASS: original Recovery snippet continued to flasher stub after download failure; corrected Recovery/Fresh/Update snippets stop before stub on invalid inputs; Bash syntax checked.",
+    "corrections": "Fail-fast native shell blocks, explicit vendor hash/size checks, saved backup digests and no-overwrite backup/readback guards; proposed notes and status documentation.",
+    "license_provenance": "PASS: pinned CrossPoint and Reader+ MIT copies match upstream; vendor release folder contains manifest/BIN without artifact-specific license; source-only policy retained.",
+    "public_files": "PASS: current Git source and history contain no firmware/private artifacts; existing v1.0.0 Release assets are source archive, SHA256SUMS.txt and RELEASE_NOTES.md.",
+    "warnings": [
+      "Windows installation not executed",
+      "New firmware not hardware tested",
+      "Paired writes not power-fail atomic",
+      "All OTA/resource updates forbidden",
+      "Battery Up+Reset and broad sleep/wake unconfirmed",
+      "No cross-host reproducibility promise",
+      "Binary redistribution not cleared"
+    ],
+    "docker_reexecuted_by_reviewer": false,
+    "new_hardware_tests": false,
+    "device_operations": false,
+    "details": "docs/V1.1_FINAL_AUDIT.md",
+    "persisted_successful_run_evidence": [
+      {
+        "run_id": "20261103T143304Z-5tpryp29",
+        "recorded_processes": 24,
+        "all_returncodes_zero": true
+      },
+      {
+        "run_id": "20261103T194418Z-ff8inki4",
+        "recorded_processes": 24,
+        "all_returncodes_zero": true
+      }
     ]
   }
 }
